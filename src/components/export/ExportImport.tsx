@@ -137,8 +137,27 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
                   return '';
                 };
 
+                // Convert date format from "28/7" to "2025-07-28"
+                const convertDateFormat = (dateStr: string) => {
+                  if (!dateStr) return '';
+                  
+                  // Handle formats like "28/7", "28/07", "28/7/2025", etc.
+                  const parts = dateStr.split('/');
+                  if (parts.length >= 2) {
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    const year = parts[2] || '2025'; // Default to current year if not provided
+                    return `${year}-${month}-${day}`;
+                  }
+                  
+                  return dateStr; // Return as-is if not in expected format
+                };
+
+                const rawData = getFieldValue(['data']);
+                const convertedData = convertDateFormat(rawData);
+
                 const activity: Activity = {
-                  data: getFieldValue(['data']),
+                  data: convertedData,
                   hora: getFieldValue(['hora']),
                   obra: getFieldValue(['obra']),
                   site: getFieldValue(['site']),
@@ -160,28 +179,58 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
           // Handle CSV files
           const content = e.target?.result as string;
           const lines = content.split('\n');
+          const headers = lines[0] ? lines[0].split(',').map(h => h.trim().replace(/"/g, '')) : [];
           
           for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
             
-            const values = line.split(',');
-            if (values.length >= 13) {
+            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+            if (values.length >= headers.length && values.some(v => v)) {
+              // Convert date format for CSV too
+              const convertDateFormat = (dateStr: string) => {
+                if (!dateStr) return '';
+                
+                const parts = dateStr.split('/');
+                if (parts.length >= 2) {
+                  const day = parts[0].padStart(2, '0');
+                  const month = parts[1].padStart(2, '0');
+                  const year = parts[2] || '2025';
+                  return `${year}-${month}-${day}`;
+                }
+                
+                return dateStr;
+              };
+
+              const getFieldValue = (fieldNames: string[]) => {
+                for (const fieldName of fieldNames) {
+                  const index = headers.findIndex(h => 
+                    h && h.toLowerCase().includes(fieldName.toLowerCase())
+                  );
+                  if (index >= 0 && values[index]) {
+                    return values[index];
+                  }
+                }
+                return '';
+              };
+
+              const rawData = getFieldValue(['data']);
+              const convertedData = convertDateFormat(rawData);
+
               const activity: Activity = {
-                id: Date.now().toString() + i,
-                data: values[0],
-                hora: values[1],
-                obra: values[2],
-                site: values[3],
-                otsOsi: values[4],
-                designacao: values[5],
-                equipeConfiguracao: values[6],
-                cidade: values[7],
-                empresa: values[8],
-                equipe: values[9],
-                atividade: values[10],
-                observacao: values[11].replace(/"/g, ''),
-                status: values[12],
+                data: convertedData,
+                hora: getFieldValue(['hora']),
+                obra: getFieldValue(['obra']),
+                site: getFieldValue(['site']),
+                otsOsi: getFieldValue(['ots', 'osi', 'ots / osi']),
+                designacao: getFieldValue(['designação', 'designacao']),
+                equipeConfiguracao: getFieldValue(['equipe configuração', 'equipe_configuracao']),
+                cidade: getFieldValue(['cidade']),
+                empresa: getFieldValue(['empresa']),
+                equipe: getFieldValue(['equipe']),
+                atividade: getFieldValue(['atividade']),
+                observacao: getFieldValue(['observação', 'observacao']),
+                status: getFieldValue(['status']) || 'PENDENTE',
               };
               importedActivities.push(activity);
             }

@@ -51,7 +51,7 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
   const applyFilters = () => {
     const filtered = activities.filter(activity => {
       return Object.entries(filters).every(([key, value]) => {
-        if (!value) return true;
+        if (!value || value === 'all') return true;
         
         const activityValue = activity[key as keyof Activity]?.toString().toLowerCase() || '';
         return activityValue.includes(value.toLowerCase());
@@ -236,7 +236,7 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
                     <SelectValue placeholder="Selecionar status..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os status</SelectItem>
+                    <SelectItem value="all">Todos os status</SelectItem>
                     {statuses.map((status) => (
                       <SelectItem key={status.id} value={status.name}>
                         {status.name}
