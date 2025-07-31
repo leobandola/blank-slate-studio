@@ -11,11 +11,13 @@ import {
   X,
   BarChart3,
   Palette,
+  LogOut,
 } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onSignOut: () => void;
 }
 
 const TABS = [
@@ -27,7 +29,7 @@ const TABS = [
   { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
-export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
+export const Sidebar = ({ activeTab, onTabChange, onSignOut }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -90,14 +92,16 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
               );
             })}
           </nav>
-        </div>
-
-        <div className="absolute bottom-6 left-6 right-6">
-          <Card className="p-4 bg-gradient-secondary">
-            <p className="text-xs text-muted-foreground text-center">
-              Sistema de Gestão de Atividades
-            </p>
-          </Card>
+          <div className="mt-auto p-4 border-t border-border">
+            <Button
+              onClick={onSignOut}
+              variant="outline"
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
+          </div>
         </div>
       </div>
     </>

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Activity } from '@/types/activity';
 import { Download, Upload, FileSpreadsheet, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface ExportImportProps {
   activities: Activity[];
@@ -46,7 +47,7 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
     }
   };
 
-  const exportToCSV = () => {
+  const exportToExcel = () => {
     const filteredActivities = getFilteredActivities();
     
     if (filteredActivities.length === 0) {
@@ -54,40 +55,45 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
       return;
     }
 
-    const headers = [
-      'DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO',
-      'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE',
-      'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'
-    ];
+    // Group activities by month for multiple sheets
+    const groupedActivities = filteredActivities.reduce((acc, activity) => {
+      const date = new Date(activity.data);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = [];
+      }
+      acc[monthKey].push(activity);
+      return acc;
+    }, {} as Record<string, Activity[]>);
 
-    const csvContent = [
-      headers.join(','),
-      ...filteredActivities.map(activity => [
-        activity.data,
-        activity.hora,
-        activity.obra,
-        activity.site,
-        activity.otsOsi,
-        activity.designacao,
-        activity.equipeConfiguracao,
-        activity.cidade,
-        activity.empresa,
-        activity.equipe,
-        activity.atividade,
-        `"${activity.observacao}"`, // Quotes for text with potential commas
-        activity.status
-      ].join(','))
-    ].join('\n');
+    const workbook = XLSX.utils.book_new();
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `atividades_${exportPeriod}_${selectedDate}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    Object.entries(groupedActivities).forEach(([monthName, monthActivities]) => {
+      const worksheetData = [
+        ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'],
+        ...monthActivities.map(activity => [
+          activity.data,
+          activity.hora,
+          activity.obra,
+          activity.site,
+          activity.otsOsi,
+          activity.designacao,
+          activity.equipeConfiguracao,
+          activity.cidade,
+          activity.empresa,
+          activity.equipe,
+          activity.atividade,
+          activity.observacao,
+          activity.status
+        ])
+      ];
+
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, monthName);
+    });
+
+    XLSX.writeFile(workbook, `atividades_${exportPeriod}_${selectedDate}.xlsx`);
 
     toast.success(`Arquivo exportado com ${filteredActivities.length} atividades`);
   };
@@ -99,42 +105,71 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const content = e.target?.result as string;
-        const lines = content.split('\n');
-        const headers = lines[0].split(',');
-        
-        // Verify headers match expected format
-        const expectedHeaders = [
-          'DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO',
-          'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE',
-          'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'
-        ];
+        const data = e.target?.result;
+        let importedActivities: Activity[] = [];
 
-        const importedActivities: Activity[] = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+          // Handle Excel files
+          const workbook = XLSX.read(data, { type: 'binary' });
           
-          const values = line.split(',');
-          if (values.length >= 13) {
-            const activity: Activity = {
-              id: Date.now().toString() + i,
-              data: values[0],
-              hora: values[1],
-              obra: values[2],
-              site: values[3],
-              otsOsi: values[4],
-              designacao: values[5],
-              equipeConfiguracao: values[6],
-              cidade: values[7],
-              empresa: values[8],
-              equipe: values[9],
-              atividade: values[10],
-              observacao: values[11].replace(/"/g, ''), // Remove quotes
-              status: values[12],
-            };
-            importedActivities.push(activity);
+          // Process all sheets
+          workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+            
+            // Skip header row
+            for (let i = 1; i < jsonData.length; i++) {
+              const row = jsonData[i];
+              if (row && row.length >= 13) {
+                const activity: Activity = {
+                  id: Date.now().toString() + Math.random(),
+                  data: row[0] || '',
+                  hora: row[1] || '',
+                  obra: row[2] || '',
+                  site: row[3] || '',
+                  otsOsi: row[4] || '',
+                  designacao: row[5] || '',
+                  equipeConfiguracao: row[6] || '',
+                  cidade: row[7] || '',
+                  empresa: row[8] || '',
+                  equipe: row[9] || '',
+                  atividade: row[10] || '',
+                  observacao: row[11] || '',
+                  status: row[12] || '',
+                };
+                importedActivities.push(activity);
+              }
+            }
+          });
+        } else {
+          // Handle CSV files
+          const content = e.target?.result as string;
+          const lines = content.split('\n');
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const values = line.split(',');
+            if (values.length >= 13) {
+              const activity: Activity = {
+                id: Date.now().toString() + i,
+                data: values[0],
+                hora: values[1],
+                obra: values[2],
+                site: values[3],
+                otsOsi: values[4],
+                designacao: values[5],
+                equipeConfiguracao: values[6],
+                cidade: values[7],
+                empresa: values[8],
+                equipe: values[9],
+                atividade: values[10],
+                observacao: values[11].replace(/"/g, ''),
+                status: values[12],
+              };
+              importedActivities.push(activity);
+            }
           }
         }
 
@@ -145,9 +180,15 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
         event.target.value = '';
       } catch (error) {
         toast.error('Erro ao importar arquivo. Verifique o formato.');
+        console.error('Import error:', error);
       }
     };
-    reader.readAsText(file);
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      reader.readAsBinaryString(file);
+    } else {
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -193,9 +234,9 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
             </span>
           </div>
 
-          <Button onClick={exportToCSV} variant="hero" className="w-full">
+          <Button onClick={exportToExcel} variant="hero" className="w-full">
             <FileSpreadsheet className="h-4 w-4" />
-            Exportar CSV/Excel
+            Exportar Excel
           </Button>
         </CardContent>
       </Card>
@@ -209,7 +250,7 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div>
-            <Label htmlFor="import-file">Selecionar Arquivo CSV</Label>
+            <Label htmlFor="import-file">Selecionar Arquivo Excel/CSV</Label>
             <input
               id="import-file"
               type="file"
@@ -222,9 +263,10 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
           <div className="p-4 bg-muted/50 rounded-lg">
             <h4 className="font-medium mb-2">Formato esperado do arquivo:</h4>
             <p className="text-sm text-muted-foreground">
-              O arquivo CSV deve conter as colunas na seguinte ordem:<br />
+              O arquivo Excel/CSV deve conter as colunas na seguinte ordem:<br />
               DATA, HORA, OBRA, SITE, OTS / OSI, DESIGNAÇÃO, EQUIPE CONFIGURAÇÃO, 
-              CIDADE, EMPRESA, EQUIPE, ATIVIDADE, OBSERVAÇÃO, STATUS
+              CIDADE, EMPRESA, EQUIPE, ATIVIDADE, OBSERVAÇÃO, STATUS<br />
+              <strong>Arquivos Excel podem ter múltiplas abas (uma por mês)</strong>
             </p>
           </div>
         </CardContent>

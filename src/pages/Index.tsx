@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ActivityTable } from '@/components/activities/ActivityTable';
 import { AddActivityForm } from '@/components/activities/AddActivityForm';
@@ -6,11 +7,13 @@ import { StatusManager } from '@/components/status/StatusManager';
 import { ExportImport } from '@/components/export/ExportImport';
 import { Reports } from '@/components/reports/Reports';
 import { Settings } from '@/components/settings/Settings';
-import { useActivities } from '@/hooks/useActivities';
+import { useSupabaseActivities } from '@/hooks/useSupabaseActivities';
 import { Toaster } from 'sonner';
+import { Activity } from '@/types/activity';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('activities');
+  const navigate = useNavigate();
   const {
     activities,
     statuses,
@@ -23,12 +26,32 @@ const Index = () => {
     updateStatus,
     deleteStatus,
     getStatusColor,
-  } = useActivities();
+    importActivities,
+    user,
+    loading,
+    signOut,
+  } = useSupabaseActivities();
 
-  const handleImportActivities = (importedActivities: any[]) => {
-    importedActivities.forEach(activity => {
-      addActivity(activity);
-    });
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
+        <div className="text-primary text-xl">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const handleImportActivities = (importedActivities: Activity[]) => {
+    importActivities(importedActivities);
   };
 
   const handleClearData = () => {
@@ -97,7 +120,7 @@ const Index = () => {
     <>
       <Toaster position="top-right" richColors />
       <div className="min-h-screen bg-background flex">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onSignOut={signOut} />
         
         <main className="flex-1 md:ml-0 p-4 md:p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
