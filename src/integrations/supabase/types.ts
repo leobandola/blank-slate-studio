@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          atividade: string
+          cidade: string
+          created_at: string
+          data: string
+          designacao: string
+          empresa: string
+          equipe: string
+          equipe_configuracao: string
+          hora: string
+          id: string
+          obra: string
+          observacao: string | null
+          ots_osi: string
+          site: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          atividade: string
+          cidade: string
+          created_at?: string
+          data: string
+          designacao: string
+          empresa: string
+          equipe: string
+          equipe_configuracao: string
+          hora: string
+          id?: string
+          obra: string
+          observacao?: string | null
+          ots_osi: string
+          site: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          atividade?: string
+          cidade?: string
+          created_at?: string
+          data?: string
+          designacao?: string
+          empresa?: string
+          equipe?: string
+          equipe_configuracao?: string
+          hora?: string
+          id?: string
+          obra?: string
+          observacao?: string | null
+          ots_osi?: string
+          site?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      activity_statuses: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
