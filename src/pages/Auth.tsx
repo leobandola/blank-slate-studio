@@ -25,6 +25,19 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const createAdminUser = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-admin-user');
+      if (error) {
+        console.error('Error creating admin user:', error);
+      } else {
+        console.log('Admin user created:', data);
+      }
+    } catch (error) {
+      console.error('Failed to create admin user:', error);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,7 +50,22 @@ const Auth = () => {
         });
 
         if (error) {
-          toast.error(error.message);
+          // If invalid credentials and trying with admin user, create it first
+          if (error.message === 'Invalid login credentials' && email === 'leolmo@gmail.com') {
+            await createAdminUser();
+            // Try login again
+            const { error: retryError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            if (retryError) {
+              toast.error(retryError.message);
+            } else {
+              toast.success('Login realizado com sucesso!');
+            }
+          } else {
+            toast.error(error.message);
+          }
         } else {
           toast.success('Login realizado com sucesso!');
         }
