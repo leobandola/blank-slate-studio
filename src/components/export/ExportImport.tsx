@@ -110,36 +110,51 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
 
         if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
           // Handle Excel files
-          const workbook = XLSX.read(data, { type: 'binary' });
+          const arrayBuffer = data as ArrayBuffer;
+          const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
           
           // Process all sheets
           workbook.SheetNames.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
             
-            // Skip header row
-            for (let i = 1; i < jsonData.length; i++) {
-              const row = jsonData[i];
-              if (row && row.length >= 13) {
+            if (jsonData.length < 2) return; // Skip empty sheets
+            
+            const headers = jsonData[0] as string[];
+            const rows = jsonData.slice(1) as any[][];
+            
+            rows.forEach(row => {
+              if (row.some((cell: any) => cell !== undefined && cell !== '')) {
+                const getFieldValue = (fieldNames: string[]) => {
+                  for (const fieldName of fieldNames) {
+                    const index = headers.findIndex(h => 
+                      h && h.toString().toLowerCase().includes(fieldName.toLowerCase())
+                    );
+                    if (index >= 0 && row[index]) {
+                      return row[index].toString();
+                    }
+                  }
+                  return '';
+                };
+
                 const activity: Activity = {
-                  id: Date.now().toString() + Math.random(),
-                  data: row[0] || '',
-                  hora: row[1] || '',
-                  obra: row[2] || '',
-                  site: row[3] || '',
-                  otsOsi: row[4] || '',
-                  designacao: row[5] || '',
-                  equipeConfiguracao: row[6] || '',
-                  cidade: row[7] || '',
-                  empresa: row[8] || '',
-                  equipe: row[9] || '',
-                  atividade: row[10] || '',
-                  observacao: row[11] || '',
-                  status: row[12] || '',
+                  data: getFieldValue(['data']),
+                  hora: getFieldValue(['hora']),
+                  obra: getFieldValue(['obra']),
+                  site: getFieldValue(['site']),
+                  otsOsi: getFieldValue(['ots', 'osi', 'ots / osi']),
+                  designacao: getFieldValue(['designação', 'designacao']),
+                  equipeConfiguracao: getFieldValue(['equipe configuração', 'equipe_configuracao']),
+                  cidade: getFieldValue(['cidade']),
+                  empresa: getFieldValue(['empresa']),
+                  equipe: getFieldValue(['equipe']),
+                  atividade: getFieldValue(['atividade']),
+                  observacao: getFieldValue(['observação', 'observacao']),
+                  status: getFieldValue(['status']) || 'PENDENTE',
                 };
                 importedActivities.push(activity);
               }
-            }
+            });
           });
         } else {
           // Handle CSV files
@@ -185,7 +200,7 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
     };
 
     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      reader.readAsBinaryString(file);
+      reader.readAsArrayBuffer(file);
     } else {
       reader.readAsText(file);
     }

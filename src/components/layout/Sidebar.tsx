@@ -12,6 +12,7 @@ import {
   BarChart3,
   Palette,
   LogOut,
+  Users,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'status', label: 'Status', icon: Palette },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
   { id: 'export', label: 'Importar/Exportar', icon: FileText },
+  { id: 'users', label: 'Usuários', icon: Users },
   { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 

@@ -8,11 +8,14 @@ import { ExportImport } from '@/components/export/ExportImport';
 import { Reports } from '@/components/reports/Reports';
 import { Settings } from '@/components/settings/Settings';
 import { useSupabaseActivities } from '@/hooks/useSupabaseActivities';
+import { ActivityFilters } from '@/components/activities/ActivityFilters';
+import { UserManagement } from '@/components/users/UserManagement';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('activities');
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const navigate = useNavigate();
   const {
     activities,
@@ -31,6 +34,10 @@ const Index = () => {
     loading,
     signOut,
   } = useSupabaseActivities();
+
+  useEffect(() => {
+    setFilteredActivities(activities);
+  }, [activities]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -63,14 +70,21 @@ const Index = () => {
     switch (activeTab) {
       case 'activities':
         return (
-          <ActivityTable
-            activities={activities}
-            statuses={statuses}
-            onUpdateActivity={updateActivity}
-            onDeleteActivity={deleteActivity}
-            onAddActivity={() => setActiveTab('add')}
-            getStatusColor={getStatusColor}
-          />
+          <>
+            <ActivityFilters
+              activities={activities}
+              statuses={statuses}
+              onFilter={setFilteredActivities}
+            />
+            <ActivityTable
+              activities={filteredActivities}
+              statuses={statuses}
+              onUpdateActivity={updateActivity}
+              onDeleteActivity={deleteActivity}
+              onAddActivity={() => setActiveTab('add')}
+              getStatusColor={getStatusColor}
+            />
+          </>
         );
       case 'add':
         return (
@@ -103,6 +117,8 @@ const Index = () => {
             onImportActivities={handleImportActivities}
           />
         );
+      case 'users':
+        return <UserManagement />;
       case 'settings':
         return (
           <Settings
