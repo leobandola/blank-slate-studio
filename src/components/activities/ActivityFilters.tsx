@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,6 +47,33 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
     observacao: '',
     status: '',
   });
+
+  // Generate unique values for each column (like Excel)
+  const uniqueValues = useMemo(() => {
+    const getUniqueValues = (key: keyof Activity) => {
+      const values = activities
+        .map(activity => activity[key]?.toString() || '')
+        .filter(value => value !== '')
+        .sort();
+      return [...new Set(values)];
+    };
+
+    return {
+      data: getUniqueValues('data'),
+      hora: getUniqueValues('hora'),
+      obra: getUniqueValues('obra'),
+      site: getUniqueValues('site'),
+      otsOsi: getUniqueValues('otsOsi'),
+      designacao: getUniqueValues('designacao'),
+      equipeConfiguracao: getUniqueValues('equipeConfiguracao'),
+      cidade: getUniqueValues('cidade'),
+      empresa: getUniqueValues('empresa'),
+      equipe: getUniqueValues('equipe'),
+      atividade: getUniqueValues('atividade'),
+      observacao: getUniqueValues('observacao'),
+      status: statuses.map(s => s.name),
+    };
+  }, [activities, statuses]);
 
   const applyFilters = () => {
     const filtered = activities.filter(activity => {
@@ -111,122 +138,104 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
               <div>
                 <Label htmlFor="filter-data">Data</Label>
-                <Input
-                  id="filter-data"
-                  placeholder="Filtrar por data..."
-                  value={filters.data}
-                  onChange={(e) => updateFilter('data', e.target.value)}
-                />
+                <Select value={filters.data} onValueChange={(value) => updateFilter('data', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar data..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as datas</SelectItem>
+                    {uniqueValues.data.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
                 <Label htmlFor="filter-hora">Hora</Label>
-                <Input
-                  id="filter-hora"
-                  placeholder="Filtrar por hora..."
-                  value={filters.hora}
-                  onChange={(e) => updateFilter('hora', e.target.value)}
-                />
+                <Select value={filters.hora} onValueChange={(value) => updateFilter('hora', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar hora..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as horas</SelectItem>
+                    {uniqueValues.hora.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
                 <Label htmlFor="filter-obra">Obra</Label>
-                <Input
-                  id="filter-obra"
-                  placeholder="Filtrar por obra..."
-                  value={filters.obra}
-                  onChange={(e) => updateFilter('obra', e.target.value)}
-                />
+                <Select value={filters.obra} onValueChange={(value) => updateFilter('obra', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar obra..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as obras</SelectItem>
+                    {uniqueValues.obra.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
                 <Label htmlFor="filter-site">Site</Label>
-                <Input
-                  id="filter-site"
-                  placeholder="Filtrar por site..."
-                  value={filters.site}
-                  onChange={(e) => updateFilter('site', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-otsOsi">OTS / OSI</Label>
-                <Input
-                  id="filter-otsOsi"
-                  placeholder="Filtrar por OTS/OSI..."
-                  value={filters.otsOsi}
-                  onChange={(e) => updateFilter('otsOsi', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-designacao">Designação</Label>
-                <Input
-                  id="filter-designacao"
-                  placeholder="Filtrar por designação..."
-                  value={filters.designacao}
-                  onChange={(e) => updateFilter('designacao', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-equipeConfiguracao">Equipe Configuração</Label>
-                <Input
-                  id="filter-equipeConfiguracao"
-                  placeholder="Filtrar por equipe configuração..."
-                  value={filters.equipeConfiguracao}
-                  onChange={(e) => updateFilter('equipeConfiguracao', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-cidade">Cidade</Label>
-                <Input
-                  id="filter-cidade"
-                  placeholder="Filtrar por cidade..."
-                  value={filters.cidade}
-                  onChange={(e) => updateFilter('cidade', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-empresa">Empresa</Label>
-                <Input
-                  id="filter-empresa"
-                  placeholder="Filtrar por empresa..."
-                  value={filters.empresa}
-                  onChange={(e) => updateFilter('empresa', e.target.value)}
-                />
+                <Select value={filters.site} onValueChange={(value) => updateFilter('site', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar site..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os sites</SelectItem>
+                    {uniqueValues.site.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
                 <Label htmlFor="filter-equipe">Equipe</Label>
-                <Input
-                  id="filter-equipe"
-                  placeholder="Filtrar por equipe..."
-                  value={filters.equipe}
-                  onChange={(e) => updateFilter('equipe', e.target.value)}
-                />
+                <Select value={filters.equipe} onValueChange={(value) => updateFilter('equipe', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar equipe..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as equipes</SelectItem>
+                    {uniqueValues.equipe.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
-                <Label htmlFor="filter-atividade">Atividade</Label>
-                <Input
-                  id="filter-atividade"
-                  placeholder="Filtrar por atividade..."
-                  value={filters.atividade}
-                  onChange={(e) => updateFilter('atividade', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filter-observacao">Observação</Label>
-                <Input
-                  id="filter-observacao"
-                  placeholder="Filtrar por observação..."
-                  value={filters.observacao}
-                  onChange={(e) => updateFilter('observacao', e.target.value)}
-                />
+                <Label htmlFor="filter-cidade">Cidade</Label>
+                <Select value={filters.cidade} onValueChange={(value) => updateFilter('cidade', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar cidade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as cidades</SelectItem>
+                    {uniqueValues.cidade.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
@@ -237,9 +246,9 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
-                    {statuses.map((status) => (
-                      <SelectItem key={status.id} value={status.name}>
-                        {status.name}
+                    {uniqueValues.status.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
                       </SelectItem>
                     ))}
                   </SelectContent>

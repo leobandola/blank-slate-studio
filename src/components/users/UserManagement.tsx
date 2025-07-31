@@ -46,16 +46,26 @@ export function UserManagement() {
           id,
           email,
           name,
-          created_at,
-          user_roles (role)
+          created_at
         `);
 
       if (profilesError) throw profilesError;
 
-      const usersWithRoles = profiles?.map((profile: any) => ({
-        ...profile,
-        role: profile.user_roles?.[0]?.role || 'analista'
-      })) || [];
+      // Load user roles separately
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with roles
+      const usersWithRoles = profiles?.map((profile: any) => {
+        const userRole = roles?.find(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || 'analista'
+        };
+      }) || [];
 
       setUsers(usersWithRoles);
     } catch (error) {

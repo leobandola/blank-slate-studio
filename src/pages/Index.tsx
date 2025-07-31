@@ -9,6 +9,7 @@ import { Reports } from '@/components/reports/Reports';
 import { Settings } from '@/components/settings/Settings';
 import { useSupabaseActivities } from '@/hooks/useSupabaseActivities';
 import { ActivityFilters } from '@/components/activities/ActivityFilters';
+import { DateView } from '@/components/activities/DateView';
 import { UserManagement } from '@/components/users/UserManagement';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
@@ -71,6 +72,10 @@ const Index = () => {
       case 'activities':
         return (
           <>
+            <DateView
+              activities={activities}
+              onFilter={setFilteredActivities}
+            />
             <ActivityFilters
               activities={activities}
               statuses={statuses}
