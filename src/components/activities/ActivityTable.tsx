@@ -53,7 +53,7 @@ export const ActivityTable = ({
       return;
     }
 
-    // Create worksheet data with styling
+    // Create worksheet data
     const worksheetData = [
       ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'],
       ...activities.map(activity => [
@@ -77,63 +77,12 @@ export const ActivityTable = ({
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     
-    // Style the header row
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let col = 0; col <= range.e.c; col++) {
-      const headerCell = XLSX.utils.encode_cell({ c: col, r: 0 });
-      if (!worksheet[headerCell]) continue;
-      worksheet[headerCell].s = {
-        font: { bold: true },
-        fill: { fgColor: { rgb: "CCCCCC" } },
-        border: {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" }
-        }
-      };
-    }
+    // Define cell styles
+    if (!worksheet['!rows']) worksheet['!rows'] = [];
+    if (!worksheet['!cols']) worksheet['!cols'] = [];
     
-    // Style data rows with status colors and alternating row colors
-    for (let row = 1; row <= range.e.r; row++) {
-      const activity = activities[row - 1];
-      const isEvenRow = row % 2 === 0;
-      
-      for (let col = 0; col <= range.e.c; col++) {
-        const cellRef = XLSX.utils.encode_cell({ c: col, r: row });
-        if (!worksheet[cellRef]) continue;
-        
-        let fillColor = isEvenRow ? "F9F9F9" : "FFFFFF";
-        let fontColor = "000000";
-        
-        // Apply status color for status column (last column)
-        if (col === range.e.c && activity?.status) {
-          const statusColor = getStatusColor(activity.status);
-          fillColor = statusColor.replace('#', '');
-          // Use white text for darker backgrounds
-          const rgb = parseInt(fillColor, 16);
-          const r = (rgb >> 16) & 255;
-          const g = (rgb >> 8) & 255;
-          const b = rgb & 255;
-          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-          fontColor = brightness > 128 ? "000000" : "FFFFFF";
-        }
-        
-        worksheet[cellRef].s = {
-          fill: { fgColor: { rgb: fillColor } },
-          font: { color: { rgb: fontColor } },
-          border: {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" }
-          }
-        };
-      }
-    }
-
     // Set column widths
-    const columnWidths = [
+    worksheet['!cols'] = [
       { wch: 12 }, // DATA
       { wch: 8 },  // HORA
       { wch: 15 }, // OBRA
@@ -148,7 +97,60 @@ export const ActivityTable = ({
       { wch: 30 }, // OBSERVAÇÃO
       { wch: 15 }  // STATUS
     ];
-    worksheet['!cols'] = columnWidths;
+
+    // Apply styles to all cells
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    
+    // Style header row
+    for (let col = 0; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ c: col, r: 0 });
+      if (!worksheet[cellAddress]) continue;
+      worksheet[cellAddress].s = {
+        font: { bold: true, color: { rgb: "000000" } },
+        fill: { fgColor: { rgb: "D3D3D3" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+    }
+    
+    // Style data rows
+    for (let row = 1; row <= range.e.r; row++) {
+      const activity = activities[row - 1];
+      if (!activity) continue;
+      
+      const statusColor = activity.status ? getStatusColor(activity.status) : '#FFFFFF';
+      const statusColorHex = statusColor.replace('#', '');
+      
+      // Calculate if we need light or dark text based on background
+      const rgb = parseInt(statusColorHex, 16);
+      const r = (rgb >> 16) & 255;
+      const g = (rgb >> 8) & 255;
+      const b = rgb & 255;
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      const textColor = brightness > 128 ? "000000" : "FFFFFF";
+      
+      for (let col = 0; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ c: col, r: row });
+        if (!worksheet[cellAddress]) continue;
+        
+        worksheet[cellAddress].s = {
+          font: { color: { rgb: textColor } },
+          fill: { fgColor: { rgb: statusColorHex } },
+          alignment: { vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          }
+        };
+      }
+    }
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Atividades Filtradas');
 
@@ -172,18 +174,25 @@ export const ActivityTable = ({
     let htmlTable = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">';
     
     // Header row
-    htmlTable += '<tr style="background-color: #CCCCCC; font-weight: bold;">';
+    htmlTable += '<tr style="background-color: #D3D3D3; font-weight: bold; text-align: center;">';
     headers.forEach(header => {
-      htmlTable += `<td style="border: 1px solid #000; padding: 4px;">${header}</td>`;
+      htmlTable += `<td style="border: 1px solid #000; padding: 4px; background-color: #D3D3D3; font-weight: bold;">${header}</td>`;
     });
     htmlTable += '</tr>';
     
     // Data rows
-    activities.forEach((activity, index) => {
-      const isEvenRow = index % 2 === 0;
-      const rowBgColor = isEvenRow ? '#F9F9F9' : '#FFFFFF';
+    activities.forEach((activity) => {
+      const statusColor = activity.status ? getStatusColor(activity.status) : '#FFFFFF';
       
-      htmlTable += `<tr style="background-color: ${rowBgColor};">`;
+      // Calculate text color based on background brightness
+      const rgb = parseInt(statusColor.replace('#', ''), 16);
+      const r = (rgb >> 16) & 255;
+      const g = (rgb >> 8) & 255;
+      const b = rgb & 255;
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      const textColor = brightness > 128 ? '#000000' : '#FFFFFF';
+      
+      htmlTable += `<tr style="background-color: ${statusColor}; color: ${textColor};">`;
       
       const values = [
         activity.data,
@@ -201,23 +210,8 @@ export const ActivityTable = ({
         activity.status
       ];
       
-      values.forEach((value, colIndex) => {
-        let cellStyle = 'border: 1px solid #000; padding: 4px;';
-        
-        // Apply status color for status column (last column)
-        if (colIndex === values.length - 1 && activity.status) {
-          const statusColor = getStatusColor(activity.status);
-          const rgb = parseInt(statusColor.replace('#', ''), 16);
-          const r = (rgb >> 16) & 255;
-          const g = (rgb >> 8) & 255;
-          const b = rgb & 255;
-          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-          const textColor = brightness > 128 ? '#000000' : '#FFFFFF';
-          
-          cellStyle += ` background-color: ${statusColor}; color: ${textColor};`;
-        }
-        
-        htmlTable += `<td style="${cellStyle}">${value || ''}</td>`;
+      values.forEach((value) => {
+        htmlTable += `<td style="border: 1px solid #000; padding: 4px; background-color: ${statusColor}; color: ${textColor};">${value || ''}</td>`;
       });
       
       htmlTable += '</tr>';
@@ -250,7 +244,7 @@ export const ActivityTable = ({
       });
 
       await navigator.clipboard.write([clipboardItem]);
-      toast.success(`${activities.length} atividades copiadas com formatação`);
+      toast.success(`${activities.length} atividades copiadas com formatação completa`);
     } catch (error) {
       // Fallback to text-only copy
       const textData = headers.join('\t') + '\n' + 
