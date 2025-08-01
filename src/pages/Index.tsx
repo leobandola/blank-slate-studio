@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import { ActivityTable } from '@/components/activities/ActivityTable';
 import { AddActivityForm } from '@/components/activities/AddActivityForm';
 import { StatusManager } from '@/components/status/StatusManager';
@@ -80,28 +81,33 @@ const Index = () => {
     switch (activeTab) {
       case 'activities':
         return (
-          <>
-            <DateView
-              activities={activities}
-              onFilter={(filtered) => {
-                setDateFilteredActivities(filtered);
-                // Don't set filteredActivities here - let ActivityFilters handle it
-              }}
-            />
-            <ActivityFilters
-              activities={dateFilteredActivities}
-              statuses={statuses}
-              onFilter={setFilteredActivities}
-            />
-            <ActivityTable
-              activities={filteredActivities}
-              statuses={statuses}
-              onUpdateActivity={updateActivity}
-              onDeleteActivity={deleteActivity}
-              onAddActivity={() => setActiveTab('add')}
-              getStatusColor={getStatusColor}
-            />
-          </>
+          <div className="h-full flex flex-col space-y-4">
+            <div className="flex-shrink-0">
+              <DateView
+                activities={activities}
+                onFilter={(filtered) => {
+                  setDateFilteredActivities(filtered);
+                }}
+              />
+            </div>
+            <div className="flex-shrink-0">
+              <ActivityFilters
+                activities={dateFilteredActivities}
+                statuses={statuses}
+                onFilter={setFilteredActivities}
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <ActivityTable
+                activities={filteredActivities}
+                statuses={statuses}
+                onUpdateActivity={updateActivity}
+                onDeleteActivity={deleteActivity}
+                onAddActivity={() => setActiveTab('add')}
+                getStatusColor={getStatusColor}
+              />
+            </div>
+          </div>
         );
       case 'add':
         return (
@@ -150,18 +156,33 @@ const Index = () => {
   };
 
   return (
-    <>
+    <SidebarProvider>
       <Toaster position="top-right" richColors />
-      <div className="min-h-screen bg-background flex">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onSignOut={signOut} />
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} onSignOut={signOut} />
         
-        <main className="flex-1 md:ml-0 p-4 md:p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            {renderContent()}
-          </div>
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="h-12 flex items-center border-b bg-background px-4">
+            <SidebarTrigger />
+            <h1 className="ml-4 font-semibold text-lg">
+              {activeTab === 'activities' && 'Atividades'}
+              {activeTab === 'add' && 'Adicionar Atividade'}
+              {activeTab === 'status' && 'Gerenciar Status'}
+              {activeTab === 'reports' && 'Relatórios'}
+              {activeTab === 'export' && 'Importar/Exportar'}
+              {activeTab === 'users' && 'Usuários'}
+              {activeTab === 'settings' && 'Configurações'}
+            </h1>
+          </header>
+          
+          <main className="flex-1 overflow-hidden p-4">
+            <div className="h-full max-w-full">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
       </div>
-    </>
+    </SidebarProvider>
   );
 };
 
