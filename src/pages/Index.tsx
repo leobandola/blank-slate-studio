@@ -38,13 +38,15 @@ const Index = () => {
   } = useSupabaseActivities();
 
   useEffect(() => {
-    // Default to showing current day activities
-    const today = new Date().toISOString().split('T')[0];
-    const todayActivities = activities.filter(activity => 
-      activity.data && activity.data === today
-    );
-    setDateFilteredActivities(todayActivities);
-    setFilteredActivities(todayActivities);
+    // Default to showing current day activities only on initial load
+    if (activities.length > 0 && dateFilteredActivities.length === 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayActivities = activities.filter(activity => 
+        activity.data && activity.data === today
+      );
+      setDateFilteredActivities(todayActivities);
+      setFilteredActivities(todayActivities);
+    }
   }, [activities]);
 
   useEffect(() => {
