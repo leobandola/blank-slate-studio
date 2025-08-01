@@ -85,7 +85,7 @@ const Index = () => {
               activities={activities}
               onFilter={(filtered) => {
                 setDateFilteredActivities(filtered);
-                setFilteredActivities(filtered);
+                // Don't set filteredActivities here - let ActivityFilters handle it
               }}
             />
             <ActivityFilters

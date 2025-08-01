@@ -88,7 +88,7 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
     onFilter(filtered);
   };
 
-  // Apply filters automatically when filters change
+  // Apply filters automatically when filters change or activities change
   useEffect(() => {
     applyFilters();
   }, [filters, activities]);
