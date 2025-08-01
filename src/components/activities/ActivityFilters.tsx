@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,6 +87,11 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
     
     onFilter(filtered);
   };
+
+  // Apply filters automatically when filters change
+  useEffect(() => {
+    applyFilters();
+  }, [filters, activities]);
 
   const clearFilters = () => {
     setFilters({
