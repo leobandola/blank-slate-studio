@@ -125,21 +125,37 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
             
             rows.forEach(row => {
               if (row.some((cell: any) => cell !== undefined && cell !== '')) {
-                const getFieldValue = (fieldNames: string[]) => {
+                const getFieldValue = (fieldNames: string[], raw = false) => {
                   for (const fieldName of fieldNames) {
                     const index = headers.findIndex(h => 
                       h && h.toString().toLowerCase().includes(fieldName.toLowerCase())
                     );
-                    if (index >= 0 && row[index]) {
-                      return row[index].toString();
+                    if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+                      return raw ? row[index] : row[index].toString();
                     }
                   }
                   return '';
                 };
 
-                // Convert date format from "28/7" to "2025-07-28"
-                const convertDateFormat = (dateStr: string) => {
-                  if (!dateStr) return '';
+                // Convert date format from Excel serial number or "28/7" to "2025-07-28"
+                const convertDateFormat = (cellValue: any) => {
+                  if (!cellValue) return '';
+                  
+                  // Check if it's an Excel serial number (number)
+                  if (typeof cellValue === 'number') {
+                    // Excel date serial number to JavaScript Date
+                    // Excel epoch is January 1, 1900 (but Excel treats 1900 as leap year incorrectly)
+                    const excelEpoch = new Date(1900, 0, 1);
+                    const jsDate = new Date(excelEpoch.getTime() + (cellValue - 2) * 24 * 60 * 60 * 1000);
+                    
+                    const year = jsDate.getFullYear();
+                    const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(jsDate.getDate()).padStart(2, '0');
+                    
+                    return `${year}-${month}-${day}`;
+                  }
+                  
+                  const dateStr = cellValue.toString();
                   
                   // Handle formats like "28/7", "28/07", "28/7/2025", etc.
                   const parts = dateStr.split('/');
@@ -150,10 +166,15 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
                     return `${year}-${month}-${day}`;
                   }
                   
+                  // Handle ISO format dates
+                  if (dateStr.includes('-') && dateStr.length === 10) {
+                    return dateStr;
+                  }
+                  
                   return dateStr; // Return as-is if not in expected format
                 };
 
-                const rawData = getFieldValue(['data']);
+                const rawData = getFieldValue(['data'], true); // Get raw value for date conversion
                 const convertedData = convertDateFormat(rawData);
 
                 const activity: Activity = {
@@ -188,8 +209,11 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
             const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
             if (values.length >= headers.length && values.some(v => v)) {
               // Convert date format for CSV too
-              const convertDateFormat = (dateStr: string) => {
-                if (!dateStr) return '';
+              const convertDateFormat = (cellValue: any) => {
+                if (!cellValue) return '';
+                
+                // For CSV, values are already strings, but apply same logic
+                const dateStr = cellValue.toString();
                 
                 const parts = dateStr.split('/');
                 if (parts.length >= 2) {
@@ -197,6 +221,11 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
                   const month = parts[1].padStart(2, '0');
                   const year = parts[2] || '2025';
                   return `${year}-${month}-${day}`;
+                }
+                
+                // Handle ISO format dates
+                if (dateStr.includes('-') && dateStr.length === 10) {
+                  return dateStr;
                 }
                 
                 return dateStr;
