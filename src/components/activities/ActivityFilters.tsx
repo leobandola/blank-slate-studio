@@ -12,7 +12,6 @@ interface ActivityFiltersProps {
   activities: Activity[];
   statuses: ActivityStatus[];
   onFilter: (filteredActivities: Activity[]) => void;
-  dateFilteredActivities?: Activity[];
 }
 
 interface FilterState {
@@ -31,7 +30,7 @@ interface FilterState {
   status: string;
 }
 
-export function ActivityFilters({ activities, statuses, onFilter, dateFilteredActivities }: ActivityFiltersProps) {
+export function ActivityFilters({ activities, statuses, onFilter }: ActivityFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     data: '',
@@ -52,9 +51,7 @@ export function ActivityFilters({ activities, statuses, onFilter, dateFilteredAc
   // Generate unique values for each column (like Excel)
   const uniqueValues = useMemo(() => {
     const getUniqueValues = (key: keyof Activity) => {
-      // Use date filtered activities if available, otherwise use all activities
-      const sourceActivities = dateFilteredActivities || activities;
-      const values = sourceActivities
+      const values = activities
         .map(activity => activity[key]?.toString() || '')
         .filter(value => value !== '')
         .sort();
@@ -78,11 +75,8 @@ export function ActivityFilters({ activities, statuses, onFilter, dateFilteredAc
     };
   }, [activities, statuses]);
 
-  const applyFilters = (activitiesFromDateFilter?: Activity[]) => {
-    // Use activities from date filter if provided, otherwise use all activities
-    const baseActivities = activitiesFromDateFilter || activities;
-    
-    const filtered = baseActivities.filter(activity => {
+  const applyFilters = () => {
+    const filtered = activities.filter(activity => {
       return Object.entries(filters).every(([key, value]) => {
         if (!value || value === 'all') return true;
         
@@ -263,7 +257,7 @@ export function ActivityFilters({ activities, statuses, onFilter, dateFilteredAc
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={() => applyFilters(dateFilteredActivities)} className="flex items-center gap-2">
+              <Button onClick={applyFilters} className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
                 Aplicar Filtros
               </Button>

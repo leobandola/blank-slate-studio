@@ -87,10 +87,9 @@ const Index = () => {
               }}
             />
             <ActivityFilters
-              activities={activities}
+              activities={dateFilteredActivities}
               statuses={statuses}
               onFilter={setFilteredActivities}
-              dateFilteredActivities={dateFilteredActivities}
             />
             <ActivityTable
               activities={filteredActivities}
