@@ -4,7 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface ActivityTableProps {
@@ -45,15 +47,77 @@ export const ActivityTable = ({
     setEditValue('');
   };
 
+  const exportFilteredActivities = () => {
+    if (activities.length === 0) {
+      toast.error('Nenhuma atividade para exportar');
+      return;
+    }
+
+    // Create worksheet data
+    const worksheetData = [
+      ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'],
+      ...activities.map(activity => [
+        activity.data,
+        activity.hora,
+        activity.obra,
+        activity.site,
+        activity.otsOsi,
+        activity.designacao,
+        activity.equipeConfiguracao,
+        activity.cidade,
+        activity.empresa,
+        activity.equipe,
+        activity.atividade,
+        activity.observacao,
+        activity.status
+      ])
+    ];
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Add colors to status column (column M, index 12)
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let row = 1; row <= range.e.r; row++) {
+      const statusCell = `M${row + 1}`;
+      const activity = activities[row - 1];
+      if (activity && activity.status) {
+        const statusColor = getStatusColor(activity.status);
+        if (!worksheet[statusCell]) worksheet[statusCell] = { v: activity.status };
+        worksheet[statusCell].s = {
+          fill: {
+            fgColor: { rgb: statusColor.replace('#', '') }
+          }
+        };
+      }
+    }
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Atividades Filtradas');
+
+    // Generate filename with current date
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `atividades_filtradas_${today}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
+    toast.success(`${activities.length} atividades exportadas para ${filename}`);
+  };
+
   return (
     <Card className="w-full overflow-hidden shadow-medium">
       <div className="p-4 border-b bg-gradient-secondary">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Lista de Atividades</h2>
-          <Button onClick={onAddActivity} size="sm" variant="hero">
-            <Plus className="h-4 w-4" />
-            Nova Atividade
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={exportFilteredActivities} size="sm" variant="outline">
+              <FileSpreadsheet className="h-4 w-4" />
+              Exportar Filtradas
+            </Button>
+            <Button onClick={onAddActivity} size="sm" variant="hero">
+              <Plus className="h-4 w-4" />
+              Nova Atividade
+            </Button>
+          </div>
         </div>
       </div>
 
