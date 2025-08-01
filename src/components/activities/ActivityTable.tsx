@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus, FileSpreadsheet } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet, Copy } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -53,7 +53,7 @@ export const ActivityTable = ({
       return;
     }
 
-    // Create worksheet data
+    // Create worksheet data with styling
     const worksheetData = [
       ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'],
       ...activities.map(activity => [
@@ -77,21 +77,78 @@ export const ActivityTable = ({
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     
-    // Add colors to status column (column M, index 12)
+    // Style the header row
     const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let col = 0; col <= range.e.c; col++) {
+      const headerCell = XLSX.utils.encode_cell({ c: col, r: 0 });
+      if (!worksheet[headerCell]) continue;
+      worksheet[headerCell].s = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "CCCCCC" } },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" }
+        }
+      };
+    }
+    
+    // Style data rows with status colors and alternating row colors
     for (let row = 1; row <= range.e.r; row++) {
-      const statusCell = `M${row + 1}`;
       const activity = activities[row - 1];
-      if (activity && activity.status) {
-        const statusColor = getStatusColor(activity.status);
-        if (!worksheet[statusCell]) worksheet[statusCell] = { v: activity.status };
-        worksheet[statusCell].s = {
-          fill: {
-            fgColor: { rgb: statusColor.replace('#', '') }
+      const isEvenRow = row % 2 === 0;
+      
+      for (let col = 0; col <= range.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ c: col, r: row });
+        if (!worksheet[cellRef]) continue;
+        
+        let fillColor = isEvenRow ? "F9F9F9" : "FFFFFF";
+        let fontColor = "000000";
+        
+        // Apply status color for status column (last column)
+        if (col === range.e.c && activity?.status) {
+          const statusColor = getStatusColor(activity.status);
+          fillColor = statusColor.replace('#', '');
+          // Use white text for darker backgrounds
+          const rgb = parseInt(fillColor, 16);
+          const r = (rgb >> 16) & 255;
+          const g = (rgb >> 8) & 255;
+          const b = rgb & 255;
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          fontColor = brightness > 128 ? "000000" : "FFFFFF";
+        }
+        
+        worksheet[cellRef].s = {
+          fill: { fgColor: { rgb: fillColor } },
+          font: { color: { rgb: fontColor } },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" }
           }
         };
       }
     }
+
+    // Set column widths
+    const columnWidths = [
+      { wch: 12 }, // DATA
+      { wch: 8 },  // HORA
+      { wch: 15 }, // OBRA
+      { wch: 12 }, // SITE
+      { wch: 12 }, // OTS/OSI
+      { wch: 20 }, // DESIGNAÇÃO
+      { wch: 18 }, // EQUIPE CONFIGURAÇÃO
+      { wch: 15 }, // CIDADE
+      { wch: 15 }, // EMPRESA
+      { wch: 12 }, // EQUIPE
+      { wch: 25 }, // ATIVIDADE
+      { wch: 30 }, // OBSERVAÇÃO
+      { wch: 15 }  // STATUS
+    ];
+    worksheet['!cols'] = columnWidths;
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Atividades Filtradas');
 
@@ -103,15 +160,134 @@ export const ActivityTable = ({
     toast.success(`${activities.length} atividades exportadas para ${filename}`);
   };
 
+  const copyWithColors = async () => {
+    if (activities.length === 0) {
+      toast.error('Nenhuma atividade para copiar');
+      return;
+    }
+
+    // Create HTML table with inline styles for colors
+    const headers = ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'];
+    
+    let htmlTable = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">';
+    
+    // Header row
+    htmlTable += '<tr style="background-color: #CCCCCC; font-weight: bold;">';
+    headers.forEach(header => {
+      htmlTable += `<td style="border: 1px solid #000; padding: 4px;">${header}</td>`;
+    });
+    htmlTable += '</tr>';
+    
+    // Data rows
+    activities.forEach((activity, index) => {
+      const isEvenRow = index % 2 === 0;
+      const rowBgColor = isEvenRow ? '#F9F9F9' : '#FFFFFF';
+      
+      htmlTable += `<tr style="background-color: ${rowBgColor};">`;
+      
+      const values = [
+        activity.data,
+        activity.hora,
+        activity.obra,
+        activity.site,
+        activity.otsOsi,
+        activity.designacao,
+        activity.equipeConfiguracao,
+        activity.cidade,
+        activity.empresa,
+        activity.equipe,
+        activity.atividade,
+        activity.observacao,
+        activity.status
+      ];
+      
+      values.forEach((value, colIndex) => {
+        let cellStyle = 'border: 1px solid #000; padding: 4px;';
+        
+        // Apply status color for status column (last column)
+        if (colIndex === values.length - 1 && activity.status) {
+          const statusColor = getStatusColor(activity.status);
+          const rgb = parseInt(statusColor.replace('#', ''), 16);
+          const r = (rgb >> 16) & 255;
+          const g = (rgb >> 8) & 255;
+          const b = rgb & 255;
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          const textColor = brightness > 128 ? '#000000' : '#FFFFFF';
+          
+          cellStyle += ` background-color: ${statusColor}; color: ${textColor};`;
+        }
+        
+        htmlTable += `<td style="${cellStyle}">${value || ''}</td>`;
+      });
+      
+      htmlTable += '</tr>';
+    });
+    
+    htmlTable += '</table>';
+
+    try {
+      // Create clipboard item with HTML format
+      const clipboardItem = new ClipboardItem({
+        'text/html': new Blob([htmlTable], { type: 'text/html' }),
+        'text/plain': new Blob([
+          headers.join('\t') + '\n' + 
+          activities.map(activity => [
+            activity.data,
+            activity.hora,
+            activity.obra,
+            activity.site,
+            activity.otsOsi,
+            activity.designacao,
+            activity.equipeConfiguracao,
+            activity.cidade,
+            activity.empresa,
+            activity.equipe,
+            activity.atividade,
+            activity.observacao,
+            activity.status
+          ].join('\t')).join('\n')
+        ], { type: 'text/plain' })
+      });
+
+      await navigator.clipboard.write([clipboardItem]);
+      toast.success(`${activities.length} atividades copiadas com formatação`);
+    } catch (error) {
+      // Fallback to text-only copy
+      const textData = headers.join('\t') + '\n' + 
+        activities.map(activity => [
+          activity.data,
+          activity.hora,
+          activity.obra,
+          activity.site,
+          activity.otsOsi,
+          activity.designacao,
+          activity.equipeConfiguracao,
+          activity.cidade,
+          activity.empresa,
+          activity.equipe,
+          activity.atividade,
+          activity.observacao,
+          activity.status
+        ].join('\t')).join('\n');
+      
+      await navigator.clipboard.writeText(textData);
+      toast.warning('Dados copiados sem formatação (seu navegador não suporta cópia com formatação)');
+    }
+  };
+
   return (
     <Card className="w-full overflow-hidden shadow-medium">
       <div className="p-4 border-b bg-gradient-secondary">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Lista de Atividades</h2>
           <div className="flex gap-2">
+            <Button onClick={copyWithColors} size="sm" variant="outline">
+              <Copy className="h-4 w-4" />
+              Copiar com Cores
+            </Button>
             <Button onClick={exportFilteredActivities} size="sm" variant="outline">
               <FileSpreadsheet className="h-4 w-4" />
-              Exportar Filtradas
+              Exportar Excel
             </Button>
             <Button onClick={onAddActivity} size="sm" variant="hero">
               <Plus className="h-4 w-4" />
