@@ -99,14 +99,19 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
   };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result;
-        let importedActivities: Activity[] = [];
+    let allImportedActivities: Activity[] = [];
+    let processedFiles = 0;
+    const totalFiles = files.length;
+
+    const processFile = (file: File) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          let importedActivities: Activity[] = [];
 
         if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
           // Handle Excel files
@@ -266,22 +271,40 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
           }
         }
 
-        onImportActivities(importedActivities);
-        toast.success(`${importedActivities.length} atividades importadas com sucesso`);
-        
-        // Clear input
-        event.target.value = '';
-      } catch (error) {
-        toast.error('Erro ao importar arquivo. Verifique o formato.');
-        console.error('Import error:', error);
+          allImportedActivities.push(...importedActivities);
+          processedFiles++;
+
+          if (processedFiles === totalFiles) {
+            // All files processed
+            onImportActivities(allImportedActivities);
+            toast.success(`${allImportedActivities.length} atividades importadas de ${totalFiles} arquivo(s)`);
+            
+            // Clear input
+            event.target.value = '';
+          }
+        } catch (error) {
+          processedFiles++;
+          toast.error(`Erro ao importar arquivo ${file.name}. Verifique o formato.`);
+          console.error('Import error:', error);
+          
+          if (processedFiles === totalFiles && allImportedActivities.length > 0) {
+            // Some files were successful
+            onImportActivities(allImportedActivities);
+            toast.success(`${allImportedActivities.length} atividades importadas com sucesso`);
+            event.target.value = '';
+          }
+        }
+      };
+
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
       }
     };
 
-    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      reader.readAsArrayBuffer(file);
-    } else {
-      reader.readAsText(file);
-    }
+    // Process all selected files
+    Array.from(files).forEach(processFile);
   };
 
   return (
@@ -343,11 +366,12 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div>
-            <Label htmlFor="import-file">Selecionar Arquivo Excel/CSV</Label>
+            <Label htmlFor="import-file">Selecionar Arquivos Excel/CSV</Label>
             <input
               id="import-file"
               type="file"
               accept=".csv,.xlsx,.xls"
+              multiple
               onChange={handleFileImport}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
@@ -356,9 +380,10 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
           <div className="p-4 bg-muted/50 rounded-lg">
             <h4 className="font-medium mb-2">Formato esperado do arquivo:</h4>
             <p className="text-sm text-muted-foreground">
-              O arquivo Excel/CSV deve conter as colunas na seguinte ordem:<br />
+              Os arquivos Excel/CSV devem conter as colunas na seguinte ordem:<br />
               DATA, HORA, OBRA, SITE, OTS / OSI, DESIGNAÇÃO, EQUIPE CONFIGURAÇÃO, 
               CIDADE, EMPRESA, EQUIPE, ATIVIDADE, OBSERVAÇÃO, STATUS<br />
+              <strong>Você pode selecionar múltiplos arquivos para importação simultânea</strong><br />
               <strong>Arquivos Excel podem ter múltiplas abas (uma por mês)</strong>
             </p>
           </div>
