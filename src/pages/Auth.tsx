@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { LogIn, UserPlus } from 'lucide-react';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,46 +42,30 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          // If invalid credentials and trying with admin user, create it first
-          if (error.message === 'Invalid login credentials' && email === 'leolmo@gmail.com') {
-            await createAdminUser();
-            // Try login again
-            const { error: retryError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-            if (retryError) {
-              toast.error(retryError.message);
-            } else {
-              toast.success('Login realizado com sucesso!');
-            }
+      if (error) {
+        // If invalid credentials and trying with admin user, create it first
+        if (error.message === 'Invalid login credentials' && email === 'leolmo@gmail.com') {
+          await createAdminUser();
+          // Try login again
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (retryError) {
+            toast.error(retryError.message);
           } else {
-            toast.error(error.message);
+            toast.success('Login realizado com sucesso!');
           }
         } else {
-          toast.success('Login realizado com sucesso!');
+          toast.error(error.message);
         }
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`
-          }
-        });
-
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success('Cadastro realizado com sucesso!');
-        }
+        toast.success('Login realizado com sucesso!');
       }
     } catch (error) {
       toast.error('Erro inesperado. Tente novamente.');
@@ -96,7 +79,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader className="bg-gradient-secondary text-center">
           <CardTitle className="text-2xl font-bold text-primary">
-            {isLogin ? 'Login' : 'Cadastro'}
+            Login
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -135,22 +118,12 @@ const Auth = () => {
                 'Aguarde...'
               ) : (
                 <>
-                  {isLogin ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {isLogin ? 'Entrar' : 'Cadastrar'}
+                  <LogIn className="h-4 w-4" />
+                  Entrar
                 </>
               )}
             </Button>
           </form>
-
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
-            >
-              {isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entre'}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>

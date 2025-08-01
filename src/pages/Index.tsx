@@ -17,6 +17,7 @@ import { Activity } from '@/types/activity';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('activities');
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
+  const [dateFilteredActivities, setDateFilteredActivities] = useState<Activity[]>([]);
   const navigate = useNavigate();
   const {
     activities,
@@ -37,7 +38,13 @@ const Index = () => {
   } = useSupabaseActivities();
 
   useEffect(() => {
-    setFilteredActivities(activities);
+    // Default to showing current day activities
+    const today = new Date().toISOString().split('T')[0];
+    const todayActivities = activities.filter(activity => 
+      activity.data && activity.data === today
+    );
+    setDateFilteredActivities(todayActivities);
+    setFilteredActivities(todayActivities);
   }, [activities]);
 
   useEffect(() => {
@@ -74,12 +81,16 @@ const Index = () => {
           <>
             <DateView
               activities={activities}
-              onFilter={setFilteredActivities}
+              onFilter={(filtered) => {
+                setDateFilteredActivities(filtered);
+                setFilteredActivities(filtered);
+              }}
             />
             <ActivityFilters
               activities={activities}
               statuses={statuses}
               onFilter={setFilteredActivities}
+              dateFilteredActivities={dateFilteredActivities}
             />
             <ActivityTable
               activities={filteredActivities}

@@ -91,8 +91,7 @@ export const ActivityTable = ({
                     key={activity.id}
                     className="border-b hover:bg-muted/30 transition-colors"
                     style={{
-                      backgroundColor: activity.status ? `${statusColor}10` : undefined,
-                      borderLeft: activity.status ? `4px solid ${statusColor}` : undefined,
+                      backgroundColor: activity.status ? `${statusColor}20` : undefined,
                     }}
                   >
                     {ACTIVITY_COLUMNS.map((column) => (

@@ -57,6 +57,11 @@ export function DateView({ activities, onFilter }: DateViewProps) {
     });
   }, [activities, viewPeriod, selectedDate]);
 
+  // Auto-apply filter when period or date changes
+  React.useEffect(() => {
+    onFilter(getFilteredActivities);
+  }, [getFilteredActivities, onFilter]);
+
   // Group activities by date for better visualization
   const groupedActivities = useMemo(() => {
     const groups: Record<string, Activity[]> = {};
