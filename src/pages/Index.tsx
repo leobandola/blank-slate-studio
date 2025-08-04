@@ -9,11 +9,16 @@ import { ExportImport } from '@/components/export/ExportImport';
 import { Reports } from '@/components/reports/Reports';
 import { Settings } from '@/components/settings/Settings';
 import { useSupabaseActivities } from '@/hooks/useSupabaseActivities';
+import { useSupabaseOsiActivities } from '@/hooks/useSupabaseOsiActivities';
 import { ActivityFilters } from '@/components/activities/ActivityFilters';
 import { DateView } from '@/components/activities/DateView';
 import { UserManagement } from '@/components/users/UserManagement';
+import { OsiActivityTable } from '@/components/activities/OsiActivityTable';
+import { AddOsiActivityForm } from '@/components/activities/AddOsiActivityForm';
+import { OsiExportImport } from '@/components/export/OsiExportImport';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
+import { OsiActivity } from '@/types/osiActivity';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('activities');
@@ -37,6 +42,15 @@ const Index = () => {
     loading,
     signOut,
   } = useSupabaseActivities();
+
+  const {
+    osiActivities,
+    addOsiActivity,
+    updateOsiActivity,
+    deleteOsiActivity,
+    importOsiActivities,
+    loading: osiLoading,
+  } = useSupabaseOsiActivities();
 
   useEffect(() => {
     // Default to showing current day activities only on initial load
@@ -109,11 +123,28 @@ const Index = () => {
             </div>
           </div>
         );
+      case 'osi-activities':
+        return (
+          <div className="h-full">
+            <OsiActivityTable
+              activities={osiActivities}
+              onUpdateActivity={updateOsiActivity}
+              onDeleteActivity={deleteOsiActivity}
+              onAddActivity={() => setActiveTab('add-osi')}
+            />
+          </div>
+        );
       case 'add':
         return (
           <AddActivityForm
             statuses={statuses}
             onAddActivity={addActivity}
+          />
+        );
+      case 'add-osi':
+        return (
+          <AddOsiActivityForm
+            onAddActivity={addOsiActivity}
           />
         );
       case 'status':
@@ -138,6 +169,13 @@ const Index = () => {
           <ExportImport
             activities={activities}
             onImportActivities={handleImportActivities}
+          />
+        );
+      case 'export-osi':
+        return (
+          <OsiExportImport
+            activities={osiActivities}
+            onImportActivities={importOsiActivities}
           />
         );
       case 'users':
@@ -166,10 +204,13 @@ const Index = () => {
             <SidebarTrigger />
             <h1 className="ml-4 font-semibold text-lg">
               {activeTab === 'activities' && 'Atividades'}
+              {activeTab === 'osi-activities' && 'Atividades OSI'}
               {activeTab === 'add' && 'Adicionar Atividade'}
+              {activeTab === 'add-osi' && 'Adicionar Atividade OSI'}
               {activeTab === 'status' && 'Gerenciar Status'}
               {activeTab === 'reports' && 'Relatórios'}
               {activeTab === 'export' && 'Importar/Exportar'}
+              {activeTab === 'export-osi' && 'Importar/Exportar OSI'}
               {activeTab === 'users' && 'Usuários'}
               {activeTab === 'settings' && 'Configurações'}
             </h1>

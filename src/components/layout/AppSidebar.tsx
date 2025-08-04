@@ -8,6 +8,7 @@ import {
   Palette,
   LogOut,
   Users,
+  Activity,
 } from 'lucide-react';
 
 import {
@@ -30,6 +31,7 @@ interface AppSidebarProps {
 
 const TABS = [
   { id: 'activities', label: 'Atividades', icon: Calendar },
+  { id: 'osi-activities', label: 'Atividades OSI', icon: Activity },
   { id: 'add', label: 'Adicionar', icon: Plus },
   { id: 'status', label: 'Status', icon: Palette },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },

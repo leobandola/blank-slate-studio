@@ -98,6 +98,51 @@ export type Database = {
         }
         Relationships: []
       }
+      osi_activities: {
+        Row: {
+          ativacao: string
+          atividade: string
+          created_at: string
+          data: string
+          equipe_campo: string
+          equipe_configuracao: string
+          id: string
+          obra: string
+          obs: string | null
+          osi: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativacao: string
+          atividade: string
+          created_at?: string
+          data: string
+          equipe_campo: string
+          equipe_configuracao: string
+          id?: string
+          obra: string
+          obs?: string | null
+          osi: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativacao?: string
+          atividade?: string
+          created_at?: string
+          data?: string
+          equipe_campo?: string
+          equipe_configuracao?: string
+          id?: string
+          obra?: string
+          obs?: string | null
+          osi?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
