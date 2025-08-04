@@ -11,6 +11,8 @@ import * as XLSX from 'xlsx';
 interface ExportImportProps {
   activities: Activity[];
   onImportActivities: (activities: Activity[]) => void;
+  osiActivities?: any[];
+  onImportOsiActivities?: (activities: any[]) => void;
 }
 
 export const ExportImport = ({ activities, onImportActivities }: ExportImportProps) => {
