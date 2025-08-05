@@ -358,7 +358,7 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
 
                   // Convert date format
                   const convertDateFormat = (cellValue: any) => {
-                    if (!cellValue) return '';
+                    if (!cellValue) return null; // Return null instead of empty string
                     
                     if (typeof cellValue === 'number') {
                       const excelEpoch = new Date(1900, 0, 1);
@@ -371,7 +371,9 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                       return `${year}-${month}-${day}`;
                     }
                     
-                    const dateStr = cellValue.toString();
+                    const dateStr = cellValue.toString().trim();
+                    if (!dateStr) return null; // Return null for empty strings
+                    
                     const parts = dateStr.split('/');
                     if (parts.length >= 2) {
                       const day = parts[0].padStart(2, '0');
@@ -384,11 +386,16 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                       return dateStr;
                     }
                     
-                    return dateStr;
+                    return null; // Return null for invalid formats
                   };
 
                   const rawData = getFieldValue(['data'], true);
                   const convertedData = convertDateFormat(rawData);
+
+                  // Skip rows without valid date
+                  if (!convertedData) {
+                    return; // Skip this row
+                  }
 
                   const osiActivity: OsiActivity = {
                     data: convertedData,
