@@ -169,6 +169,8 @@ const Index = () => {
           <ExportImport
             activities={activities}
             onImportActivities={handleImportActivities}
+            osiActivities={osiActivities}
+            onImportOsiActivities={importOsiActivities}
           />
         );
       case 'export-osi':

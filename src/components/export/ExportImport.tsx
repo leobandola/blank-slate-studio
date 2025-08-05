@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity } from '@/types/activity';
+import { OsiActivity } from '@/types/osiActivity';
 import { Download, Upload, FileSpreadsheet, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -11,11 +12,11 @@ import * as XLSX from 'xlsx';
 interface ExportImportProps {
   activities: Activity[];
   onImportActivities: (activities: Activity[]) => void;
-  osiActivities?: any[];
-  onImportOsiActivities?: (activities: any[]) => void;
+  osiActivities?: OsiActivity[];
+  onImportOsiActivities?: (activities: OsiActivity[]) => void;
 }
 
-export const ExportImport = ({ activities, onImportActivities }: ExportImportProps) => {
+export const ExportImport = ({ activities, onImportActivities, osiActivities, onImportOsiActivities }: ExportImportProps) => {
   const [exportPeriod, setExportPeriod] = useState<'day' | 'week' | 'month'>('day');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -309,6 +310,129 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
     Array.from(files).forEach(processFile);
   };
 
+  const handleOsiFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onImportOsiActivities) return;
+    
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    let allImportedOsiActivities: OsiActivity[] = [];
+    let processedFiles = 0;
+    const totalFiles = files.length;
+
+    const processFile = (file: File) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          let importedOsiActivities: OsiActivity[] = [];
+
+          if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            // Handle Excel files
+            const arrayBuffer = data as ArrayBuffer;
+            const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+            
+            // Process all sheets
+            workbook.SheetNames.forEach(sheetName => {
+              const worksheet = workbook.Sheets[sheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+              
+              if (jsonData.length < 2) return; // Skip empty sheets
+              
+              const headers = jsonData[0] as string[];
+              const rows = jsonData.slice(1) as any[][];
+              
+              rows.forEach(row => {
+                if (row.some((cell: any) => cell !== undefined && cell !== '')) {
+                  const getFieldValue = (fieldNames: string[], raw = false) => {
+                    for (const fieldName of fieldNames) {
+                      const index = headers.findIndex(h => 
+                        h && h.toString().toLowerCase().includes(fieldName.toLowerCase())
+                      );
+                      if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+                        return raw ? row[index] : row[index].toString();
+                      }
+                    }
+                    return '';
+                  };
+
+                  // Convert date format
+                  const convertDateFormat = (cellValue: any) => {
+                    if (!cellValue) return '';
+                    
+                    if (typeof cellValue === 'number') {
+                      const excelEpoch = new Date(1900, 0, 1);
+                      const jsDate = new Date(excelEpoch.getTime() + (cellValue - 2) * 24 * 60 * 60 * 1000);
+                      
+                      const year = jsDate.getFullYear();
+                      const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+                      const day = String(jsDate.getDate()).padStart(2, '0');
+                      
+                      return `${year}-${month}-${day}`;
+                    }
+                    
+                    const dateStr = cellValue.toString();
+                    const parts = dateStr.split('/');
+                    if (parts.length >= 2) {
+                      const day = parts[0].padStart(2, '0');
+                      const month = parts[1].padStart(2, '0');
+                      const year = parts[2] || '2025';
+                      return `${year}-${month}-${day}`;
+                    }
+                    
+                    if (dateStr.includes('-') && dateStr.length === 10) {
+                      return dateStr;
+                    }
+                    
+                    return dateStr;
+                  };
+
+                  const rawData = getFieldValue(['data'], true);
+                  const convertedData = convertDateFormat(rawData);
+
+                  const osiActivity: OsiActivity = {
+                    data: convertedData,
+                    obra: getFieldValue(['obra']),
+                    atividade: getFieldValue(['atividade']),
+                    osi: getFieldValue(['osi']),
+                    ativacao: getFieldValue(['ativacao', 'ativação']),
+                    equipe_campo: getFieldValue(['equipe de campo', 'equipe_campo']),
+                    equipe_configuracao: getFieldValue(['equipe de configuracao', 'equipe de configuração', 'equipe_configuracao']),
+                    obs: getFieldValue(['obs', 'observacao', 'observação']),
+                  };
+                  importedOsiActivities.push(osiActivity);
+                }
+              });
+            });
+          }
+
+          allImportedOsiActivities.push(...importedOsiActivities);
+          processedFiles++;
+
+          if (processedFiles === totalFiles) {
+            onImportOsiActivities(allImportedOsiActivities);
+            toast.success(`${allImportedOsiActivities.length} atividades OSI importadas de ${totalFiles} arquivo(s)`);
+            event.target.value = '';
+          }
+        } catch (error) {
+          processedFiles++;
+          toast.error(`Erro ao importar arquivo OSI ${file.name}. Verifique o formato.`);
+          console.error('OSI Import error:', error);
+          
+          if (processedFiles === totalFiles && allImportedOsiActivities.length > 0) {
+            onImportOsiActivities(allImportedOsiActivities);
+            toast.success(`${allImportedOsiActivities.length} atividades OSI importadas com sucesso`);
+            event.target.value = '';
+          }
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    };
+
+    Array.from(files).forEach(processFile);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-medium">
@@ -391,6 +515,40 @@ export const ExportImport = ({ activities, onImportActivities }: ExportImportPro
           </div>
         </CardContent>
       </Card>
+
+      {onImportOsiActivities && (
+        <Card className="shadow-medium">
+          <CardHeader className="bg-gradient-secondary">
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Importar Atividades OSI
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div>
+              <Label htmlFor="import-osi-file">Selecionar Arquivos Excel OSI</Label>
+              <input
+                id="import-osi-file"
+                type="file"
+                accept=".xlsx,.xls"
+                multiple
+                onChange={handleOsiFileImport}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <h4 className="font-medium mb-2">Formato esperado do arquivo OSI:</h4>
+              <p className="text-sm text-muted-foreground">
+                Os arquivos Excel devem conter as colunas na seguinte ordem:<br />
+                DATA, OBRA, ATIVIDADE, OSI, ATIVAÇÃO, EQUIPE DE CAMPO, EQUIPE DE CONFIGURAÇÃO, OBS<br />
+                <strong>Você pode selecionar múltiplos arquivos para importação simultânea</strong><br />
+                <strong>Arquivos Excel podem ter múltiplas abas</strong>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
