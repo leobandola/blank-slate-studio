@@ -392,21 +392,32 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                   const rawData = getFieldValue(['data'], true);
                   const convertedData = convertDateFormat(rawData);
 
-                  // Skip rows without valid date
-                  if (!convertedData) {
-                    return; // Skip this row
+                  // Debug logs
+                  console.log('Processing row:', row);
+                  console.log('Raw data:', rawData);
+                  console.log('Converted data:', convertedData);
+
+                  // Skip rows without valid data - but check if at least obra or atividade exists
+                  const obra = getFieldValue(['obra']);
+                  const atividade = getFieldValue(['atividade']);
+                  
+                  if (!convertedData && !obra && !atividade) {
+                    console.log('Skipping row - no valid data');
+                    return; // Skip this row only if no essential data exists
                   }
 
                   const osiActivity: OsiActivity = {
-                    data: convertedData,
-                    obra: getFieldValue(['obra']),
-                    atividade: getFieldValue(['atividade']),
-                    osi: getFieldValue(['osi']),
-                    ativacao: getFieldValue(['ativacao', 'ativação']),
-                    equipe_campo: getFieldValue(['equipe de campo', 'equipe_campo']),
-                    equipe_configuracao: getFieldValue(['equipe de configuracao', 'equipe de configuração', 'equipe_configuracao']),
-                    obs: getFieldValue(['obs', 'observacao', 'observação']),
+                    data: convertedData || new Date().toISOString().split('T')[0], // Use today's date if no valid date
+                    obra: obra || '',
+                    atividade: atividade || '',
+                    osi: getFieldValue(['osi']) || '',
+                    ativacao: getFieldValue(['ativacao', 'ativação']) || '',
+                    equipe_campo: getFieldValue(['equipe de campo', 'equipe_campo']) || '',
+                    equipe_configuracao: getFieldValue(['equipe de configuracao', 'equipe de configuração', 'equipe_configuracao']) || '',
+                    obs: getFieldValue(['obs', 'observacao', 'observação']) || '',
                   };
+                  
+                  console.log('OSI Activity to import:', osiActivity);
                   importedOsiActivities.push(osiActivity);
                 }
               });
