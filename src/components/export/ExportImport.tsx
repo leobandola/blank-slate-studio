@@ -145,6 +145,31 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                   return '';
                 };
 
+                // Special function for equipe to avoid conflicts with equipe configuracao
+                const getEquipeValue = () => {
+                  // First try to find exact match for "equipe" that is not "configuracao"
+                  const equipeIndex = headers.findIndex(h => 
+                    h && h.toString().toLowerCase().trim() === 'equipe'
+                  );
+                  if (equipeIndex >= 0 && row[equipeIndex] !== undefined && row[equipeIndex] !== '') {
+                    return row[equipeIndex].toString();
+                  }
+                  
+                  // Then try variations that don't include "configuracao"
+                  const equipeVariations = ['equipe de campo', 'equipe campo', 'tecnico', 'técnico'];
+                  for (const variation of equipeVariations) {
+                    const index = headers.findIndex(h => 
+                      h && h.toString().toLowerCase().includes(variation.toLowerCase()) && 
+                      !h.toString().toLowerCase().includes('configuracao') &&
+                      !h.toString().toLowerCase().includes('configuração')
+                    );
+                    if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+                      return row[index].toString();
+                    }
+                  }
+                  return '';
+                };
+
                 // Convert date format from Excel serial number or "28/7" to "2025-07-28"
                 const convertDateFormat = (cellValue: any) => {
                   if (!cellValue) return '';
@@ -195,7 +220,7 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                   equipeConfiguracao: getFieldValue(['equipe configuração', 'equipe_configuracao', 'equipe de configuração']),
                   cidade: getFieldValue(['cidade']),
                   empresa: getFieldValue(['empresa']),
-                  equipe: getFieldValue(['equipe de campo', 'equipe campo', 'tecnico', 'técnico']),
+                  equipe: getEquipeValue(),
                   atividade: getFieldValue(['atividade']),
                   observacao: getFieldValue(['observação', 'observacao']),
                   status: getFieldValue(['status']) || 'PENDENTE',
@@ -251,6 +276,31 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                 return '';
               };
 
+              // Special function for equipe to avoid conflicts with equipe configuracao
+              const getEquipeValue = () => {
+                // First try to find exact match for "equipe" that is not "configuracao"
+                const equipeIndex = headers.findIndex(h => 
+                  h && h.toLowerCase().trim() === 'equipe'
+                );
+                if (equipeIndex >= 0 && values[equipeIndex]) {
+                  return values[equipeIndex];
+                }
+                
+                // Then try variations that don't include "configuracao"
+                const equipeVariations = ['equipe de campo', 'equipe campo', 'tecnico', 'técnico'];
+                for (const variation of equipeVariations) {
+                  const index = headers.findIndex(h => 
+                    h && h.toLowerCase().includes(variation.toLowerCase()) && 
+                    !h.toLowerCase().includes('configuracao') &&
+                    !h.toLowerCase().includes('configuração')
+                  );
+                  if (index >= 0 && values[index]) {
+                    return values[index];
+                  }
+                }
+                return '';
+              };
+
               const rawData = getFieldValue(['data']);
               const convertedData = convertDateFormat(rawData);
 
@@ -264,7 +314,7 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                 equipeConfiguracao: getFieldValue(['equipe configuração', 'equipe_configuracao', 'equipe de configuração']),
                 cidade: getFieldValue(['cidade']),
                 empresa: getFieldValue(['empresa']),
-                equipe: getFieldValue(['equipe de campo', 'equipe campo', 'tecnico', 'técnico']),
+                equipe: getEquipeValue(),
                 atividade: getFieldValue(['atividade']),
                 observacao: getFieldValue(['observação', 'observacao']),
                 status: getFieldValue(['status']) || 'PENDENTE',
