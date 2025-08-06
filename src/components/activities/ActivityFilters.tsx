@@ -227,6 +227,23 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
               </div>
               
               <div>
+                <Label htmlFor="filter-equipe-configuracao">Equipe de Configuração</Label>
+                <Select value={filters.equipeConfiguracao} onValueChange={(value) => updateFilter('equipeConfiguracao', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar equipe de configuração..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as equipes de configuração</SelectItem>
+                    {uniqueValues.equipeConfiguracao.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
                 <Label htmlFor="filter-cidade">Cidade</Label>
                 <Select value={filters.cidade} onValueChange={(value) => updateFilter('cidade', value)}>
                   <SelectTrigger>
