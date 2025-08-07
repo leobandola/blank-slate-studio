@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Calendar,
   Plus,
@@ -42,6 +42,35 @@ const TABS = [
 
 export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProps) {
   const { open } = useSidebar();
+  const [appTitle, setAppTitle] = useState(() => localStorage.getItem('appTitle') || 'Agenda Empresarial');
+  const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem('appSubtitle') || 'Controle de Demandas');
+
+  useEffect(() => {
+    // Load custom favicon on app start
+    const customFavicon = localStorage.getItem('customFavicon');
+    if (customFavicon) {
+      const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+      existingFavicons.forEach(link => link.remove());
+      
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = customFavicon;
+      document.head.appendChild(link);
+    }
+
+    // Listen for branding updates
+    const handleBrandingUpdate = (event: CustomEvent) => {
+      setAppTitle(event.detail.title);
+      setAppSubtitle(event.detail.subtitle);
+    };
+
+    window.addEventListener('brandingUpdated', handleBrandingUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('brandingUpdated', handleBrandingUpdate as EventListener);
+    };
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -50,11 +79,11 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
           <SidebarGroupLabel>
             <div className="flex flex-col">
               <span className="font-bold text-sm bg-gradient-primary bg-clip-text text-transparent">
-                Agenda Empresarial
+                {appTitle}
               </span>
               {open && (
                 <span className="text-xs text-muted-foreground">
-                  Controle de Demandas
+                  {appSubtitle}
                 </span>
               )}
             </div>

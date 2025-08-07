@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Settings as SettingsIcon, Download, Upload, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Settings as SettingsIcon, Download, Upload, Trash2, Image } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SettingsProps {
@@ -16,6 +17,44 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
   const [autoSave, setAutoSave] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [compactView, setCompactView] = useState(false);
+  const [appTitle, setAppTitle] = useState(() => localStorage.getItem('appTitle') || 'Agenda Empresarial');
+  const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem('appSubtitle') || 'Controle de Demandas');
+
+  const updateFavicon = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      
+      // Remove existing favicon links
+      const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+      existingFavicons.forEach(link => link.remove());
+      
+      // Add new favicon
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = file.type;
+      link.href = result;
+      document.head.appendChild(link);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('customFavicon', result);
+      
+      toast.success('Favicon atualizado com sucesso!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateAppBranding = () => {
+    localStorage.setItem('appTitle', appTitle);
+    localStorage.setItem('appSubtitle', appSubtitle);
+    
+    // Trigger a custom event to update the sidebar
+    window.dispatchEvent(new CustomEvent('brandingUpdated', { 
+      detail: { title: appTitle, subtitle: appSubtitle } 
+    }));
+    
+    toast.success('Informações da marca atualizadas!');
+  };
 
   const exportAllData = () => {
     const data = {
@@ -69,6 +108,64 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
 
   return (
     <div className="space-y-6">
+      <Card className="shadow-medium">
+        <CardHeader className="bg-gradient-secondary">
+          <CardTitle className="flex items-center gap-2">
+            <Image className="h-5 w-5" />
+            Personalização da Marca
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <div>
+            <Label htmlFor="app-title">Nome da Aplicação</Label>
+            <Input
+              id="app-title"
+              type="text"
+              value={appTitle}
+              onChange={(e) => setAppTitle(e.target.value)}
+              className="mt-2"
+              placeholder="Nome da aplicação"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="app-subtitle">Subtítulo</Label>
+            <Input
+              id="app-subtitle"
+              type="text"
+              value={appSubtitle}
+              onChange={(e) => setAppSubtitle(e.target.value)}
+              className="mt-2"
+              placeholder="Subtítulo da aplicação"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="favicon-upload">Favicon (PNG/JPG)</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Altere o ícone que aparece na aba do navegador
+            </p>
+            <input
+              id="favicon-upload"
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) updateFavicon(file);
+              }}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Importante: Lovable não suporta arquivos .ico. Use PNG/JPG.
+            </p>
+          </div>
+
+          <Button onClick={updateAppBranding} className="w-full">
+            Salvar Alterações da Marca
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-medium">
         <CardHeader className="bg-gradient-secondary">
           <CardTitle className="flex items-center gap-2">
