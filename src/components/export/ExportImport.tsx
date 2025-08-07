@@ -222,7 +222,7 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                   empresa: getFieldValue(['empresa']),
                   equipe: getEquipeValue(),
                   atividade: getFieldValue(['atividade']),
-                  observacao: getFieldValue(['observação', 'observacao']),
+                  observacao: getFieldValue(['observação', 'observacao', 'observações', 'observacoes', 'obs']),
                   status: getFieldValue(['status']) || 'PENDENTE',
                 };
                 importedActivities.push(activity);
@@ -316,7 +316,7 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
                 empresa: getFieldValue(['empresa']),
                 equipe: getEquipeValue(),
                 atividade: getFieldValue(['atividade']),
-                observacao: getFieldValue(['observação', 'observacao']),
+                observacao: getFieldValue(['observação', 'observacao', 'observações', 'observacoes', 'obs']),
                 status: getFieldValue(['status']) || 'PENDENTE',
               };
               importedActivities.push(activity);
