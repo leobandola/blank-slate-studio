@@ -19,6 +19,7 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
   const [compactView, setCompactView] = useState(false);
   const [appTitle, setAppTitle] = useState(() => localStorage.getItem('appTitle') || 'Agenda Empresarial');
   const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem('appSubtitle') || 'Controle de Demandas');
+  const [logo, setLogo] = useState<string>('');
 
   const updateFavicon = (file: File) => {
     const reader = new FileReader();
@@ -40,6 +41,23 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
       localStorage.setItem('customFavicon', result);
       
       toast.success('Favicon atualizado com sucesso!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateLogo = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setLogo(result);
+      
+      // Store logo globally
+      const logoEvent = new CustomEvent('logoUpdated', { 
+        detail: { logo: result } 
+      });
+      window.dispatchEvent(logoEvent);
+      
+      toast.success('Logo atualizado com sucesso!');
     };
     reader.readAsDataURL(file);
   };
@@ -138,6 +156,28 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
               className="mt-2"
               placeholder="Subtítulo da aplicação"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="logo-upload">Logo da Aplicação (PNG/JPG/SVG)</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Logo que aparecerá na barra lateral
+            </p>
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) updateLogo(file);
+              }}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            {logo && (
+              <div className="mt-2">
+                <img src={logo} alt="Logo preview" className="h-16 w-auto border rounded" />
+              </div>
+            )}
           </div>
 
           <div>

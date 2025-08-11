@@ -44,6 +44,7 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
   const { open } = useSidebar();
   const [appTitle, setAppTitle] = useState(() => localStorage.getItem('appTitle') || 'Agenda Empresarial');
   const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem('appSubtitle') || 'Controle de Demandas');
+  const [logo, setLogo] = useState<string>('');
 
   useEffect(() => {
     // Load custom favicon on app start
@@ -65,10 +66,16 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
       setAppSubtitle(event.detail.subtitle);
     };
 
+    const handleLogoUpdate = (event: CustomEvent) => {
+      setLogo(event.detail.logo);
+    };
+
     window.addEventListener('brandingUpdated', handleBrandingUpdate as EventListener);
+    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
     
     return () => {
       window.removeEventListener('brandingUpdated', handleBrandingUpdate as EventListener);
+      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
     };
   }, []);
 
@@ -77,15 +84,20 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm bg-gradient-primary bg-clip-text text-transparent">
-                {appTitle}
-              </span>
-              {open && (
-                <span className="text-xs text-muted-foreground">
-                  {appSubtitle}
-                </span>
+            <div className="flex items-center gap-2">
+              {logo && (
+                <img src={logo} alt="Logo" className="h-8 w-8 object-contain" />
               )}
+              <div className="flex flex-col">
+                <span className="font-bold text-sm bg-gradient-primary bg-clip-text text-transparent">
+                  {appTitle}
+                </span>
+                {open && (
+                  <span className="text-xs text-muted-foreground">
+                    {appSubtitle}
+                  </span>
+                )}
+              </div>
             </div>
           </SidebarGroupLabel>
           
