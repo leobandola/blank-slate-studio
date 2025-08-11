@@ -40,6 +40,7 @@ export const useSupabaseOsiActivities = () => {
           equipe_campo: activity.equipe_campo,
           equipe_configuracao: activity.equipe_configuracao,
           obs: activity.obs || '',
+          status: activity.status || 'PENDENTE',
           user_id: activity.user_id
         })) || [];
 
@@ -80,6 +81,7 @@ export const useSupabaseOsiActivities = () => {
         equipe_campo: data.equipe_campo,
         equipe_configuracao: data.equipe_configuracao,
         obs: data.obs || '',
+        status: data.status || 'PENDENTE',
         user_id: data.user_id
       };
 
@@ -156,6 +158,7 @@ export const useSupabaseOsiActivities = () => {
         equipe_campo: activity.equipe_campo,
         equipe_configuracao: activity.equipe_configuracao,
         obs: activity.obs || '',
+        status: activity.status || 'PENDENTE',
         user_id: activity.user_id
       })) || [];
 

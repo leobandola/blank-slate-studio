@@ -6,21 +6,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Copy, Download, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 interface OsiActivityTableProps {
   activities: OsiActivity[];
+  statuses: Array<{ id: string; name: string; color: string }>;
   onUpdateActivity: (id: string, updates: Partial<OsiActivity>) => void;
   onDeleteActivity: (id: string) => void;
   onAddActivity: () => void;
+  getStatusColor: (statusName: string) => string;
 }
 
 export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
   activities,
+  statuses,
   onUpdateActivity,
   onDeleteActivity,
-  onAddActivity
+  onAddActivity,
+  getStatusColor
 }) => {
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -58,6 +63,7 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
         'ATIVAÇÃO': activity.ativacao,
         'EQUIPE DE CAMPO': activity.equipe_campo,
         'EQUIPE DE CONFIGURAÇÃO': activity.equipe_configuracao,
+        'STATUS': activity.status,
         'OBS': activity.obs
       }));
 
@@ -72,6 +78,7 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
         { width: 25 }, // ATIVAÇÃO
         { width: 25 }, // EQUIPE DE CAMPO
         { width: 25 }, // EQUIPE DE CONFIGURAÇÃO
+        { width: 15 }, // STATUS
         { width: 20 }  // OBS
       ];
 
@@ -217,9 +224,35 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
                         className="border-r last:border-r-0 p-2"
                         style={{ minWidth: column.width }}
                       >
-                        {isEditing ? (
+                         {isEditing ? (
                           <div className="flex flex-col gap-1">
-                            {column.key === 'atividade' || column.key === 'obs' ? (
+                            {column.label === 'STATUS' ? (
+                              <Select
+                                value={editValue}
+                                onValueChange={(value) => {
+                                  setEditValue(value);
+                                  onUpdateActivity(activity.id!, { [column.key]: value });
+                                  setEditingCell(null);
+                                }}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {statuses.map((status) => (
+                                    <SelectItem key={status.id} value={status.name}>
+                                      <div className="flex items-center gap-2">
+                                        <div
+                                          className="w-3 h-3 rounded-full"
+                                          style={{ backgroundColor: status.color }}
+                                        />
+                                        {status.name}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : column.key === 'atividade' || column.key === 'obs' ? (
                               <Textarea
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
@@ -234,23 +267,35 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
                                 autoFocus
                               />
                             )}
-                            <div className="flex gap-1">
-                              <Button size="sm" onClick={saveEdit} className="h-6 px-2 text-xs">
-                                Salvar
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={cancelEdit} className="h-6 px-2 text-xs">
-                                Cancelar
-                              </Button>
-                            </div>
+                            {column.label !== 'STATUS' && (
+                              <div className="flex gap-1">
+                                <Button size="sm" onClick={saveEdit} className="h-6 px-2 text-xs">
+                                  Salvar
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={cancelEdit} className="h-6 px-2 text-xs">
+                                  Cancelar
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div
                             className="cursor-pointer hover:bg-muted/30 p-1 rounded min-h-[2rem] flex items-start"
                             onClick={() => startEdit(activity.id!, column.key, String(value))}
                           >
-                            <span className="break-words text-sm leading-relaxed">
-                              {String(value)}
-                            </span>
+                            {column.label === 'STATUS' ? (
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: getStatusColor(String(value)) }}
+                                />
+                                <span className="text-sm">{String(value) || 'PENDENTE'}</span>
+                              </div>
+                            ) : (
+                              <span className="break-words text-sm leading-relaxed">
+                                {String(value)}
+                              </span>
+                            )}
                           </div>
                         )}
                       </TableCell>

@@ -12,10 +12,14 @@ import { useSupabaseActivities } from '@/hooks/useSupabaseActivities';
 import { useSupabaseOsiActivities } from '@/hooks/useSupabaseOsiActivities';
 import { ActivityFilters } from '@/components/activities/ActivityFilters';
 import { DateView } from '@/components/activities/DateView';
+import { OsiActivityFilters } from '@/components/activities/OsiActivityFilters';
+import { OsiDateView } from '@/components/activities/OsiDateView';
 import { UserManagement } from '@/components/users/UserManagement';
 import { OsiActivityTable } from '@/components/activities/OsiActivityTable';
 import { AddOsiActivityForm } from '@/components/activities/AddOsiActivityForm';
 import { OsiExportImport } from '@/components/export/OsiExportImport';
+import { ActivityReports } from '@/components/reports/ActivityReports';
+import { OsiActivityReports } from '@/components/reports/OsiActivityReports';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -24,6 +28,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('activities');
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const [dateFilteredActivities, setDateFilteredActivities] = useState<Activity[]>([]);
+  const [filteredOsiActivities, setFilteredOsiActivities] = useState<OsiActivity[]>([]);
+  const [dateFilteredOsiActivities, setDateFilteredOsiActivities] = useState<OsiActivity[]>([]);
   const navigate = useNavigate();
   const {
     activities,
@@ -63,6 +69,18 @@ const Index = () => {
       setFilteredActivities(todayActivities);
     }
   }, [activities]);
+
+  useEffect(() => {
+    // Default to showing current day OSI activities only on initial load
+    if (osiActivities.length > 0 && dateFilteredOsiActivities.length === 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayOsiActivities = osiActivities.filter(activity => 
+        activity.data && activity.data === today
+      );
+      setDateFilteredOsiActivities(todayOsiActivities);
+      setFilteredOsiActivities(todayOsiActivities);
+    }
+  }, [osiActivities]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -125,13 +143,32 @@ const Index = () => {
         );
       case 'osi-activities':
         return (
-          <div className="h-full">
-            <OsiActivityTable
-              activities={osiActivities}
-              onUpdateActivity={updateOsiActivity}
-              onDeleteActivity={deleteOsiActivity}
-              onAddActivity={() => setActiveTab('add-osi')}
-            />
+          <div className="h-full flex flex-col space-y-4">
+            <div className="flex-shrink-0">
+              <OsiDateView
+                activities={osiActivities}
+                onFilter={(filtered) => {
+                  setDateFilteredOsiActivities(filtered);
+                }}
+              />
+            </div>
+            <div className="flex-shrink-0">
+              <OsiActivityFilters
+                activities={dateFilteredOsiActivities}
+                statuses={statuses}
+                onFilter={setFilteredOsiActivities}
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <OsiActivityTable
+                activities={filteredOsiActivities}
+                statuses={statuses}
+                onUpdateActivity={updateOsiActivity}
+                onDeleteActivity={deleteOsiActivity}
+                onAddActivity={() => setActiveTab('add-osi')}
+                getStatusColor={getStatusColor}
+              />
+            </div>
           </div>
         );
       case 'add':
@@ -158,11 +195,18 @@ const Index = () => {
         );
       case 'reports':
         return (
-          <Reports
-            activities={activities}
-            statuses={statuses}
-            getStatusColor={getStatusColor}
-          />
+          <div className="space-y-8">
+            <ActivityReports
+              activities={activities}
+              statuses={statuses}
+              getStatusColor={getStatusColor}
+            />
+            <OsiActivityReports
+              activities={osiActivities}
+              statuses={statuses}
+              getStatusColor={getStatusColor}
+            />
+          </div>
         );
       case 'export':
         return (

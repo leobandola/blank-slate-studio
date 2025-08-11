@@ -8,6 +8,7 @@ export interface OsiActivity {
   equipe_campo: string;
   equipe_configuracao: string;
   obs: string;
+  status?: string;
   user_id?: string;
 }
 
@@ -19,5 +20,6 @@ export const OSI_ACTIVITY_COLUMNS = [
   { key: 'ativacao', label: 'ATIVAÇÃO', width: '160px' },
   { key: 'equipe_campo', label: 'EQUIPE DE CAMPO', width: '200px' },
   { key: 'equipe_configuracao', label: 'EQUIPE DE CONFIGURAÇÃO', width: '200px' },
+  { key: 'status', label: 'STATUS', width: '120px' },
   { key: 'obs', label: 'OBS', width: '150px' },
 ];

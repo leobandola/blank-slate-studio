@@ -110,6 +110,7 @@ export type Database = {
           obra: string
           obs: string | null
           osi: string
+          status: string
           updated_at: string
           user_id: string
         }
@@ -124,6 +125,7 @@ export type Database = {
           obra: string
           obs?: string | null
           osi: string
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -138,6 +140,7 @@ export type Database = {
           obra?: string
           obs?: string | null
           osi?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
