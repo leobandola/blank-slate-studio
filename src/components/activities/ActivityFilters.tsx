@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Filter, X } from 'lucide-react';
+import { ChevronDown, Filter, X, Search } from 'lucide-react';
 import { Activity, ActivityStatus } from '@/types/activity';
 
 interface ActivityFiltersProps {
@@ -32,6 +32,7 @@ interface FilterState {
 
 export function ActivityFilters({ activities, statuses, onFilter }: ActivityFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterState>({
     data: '',
     hora: '',
@@ -77,6 +78,20 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
 
   const applyFilters = () => {
     const filtered = activities.filter(activity => {
+      // First apply search filter
+      if (searchTerm) {
+        const searchableFields = [
+          'obra', 'site', 'otsOsi', 'designacao', 'equipeConfiguracao', 
+          'cidade', 'empresa', 'equipe', 'atividade', 'observacao'
+        ];
+        const matchesSearch = searchableFields.some(field => {
+          const fieldValue = activity[field as keyof Activity]?.toString().toLowerCase() || '';
+          return fieldValue.includes(searchTerm.toLowerCase());
+        });
+        if (!matchesSearch) return false;
+      }
+      
+      // Then apply specific filters
       return Object.entries(filters).every(([key, value]) => {
         if (!value || value === 'all') return true;
         
@@ -91,9 +106,10 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
   // Apply filters automatically when filters change or activities change
   useEffect(() => {
     applyFilters();
-  }, [filters, activities]);
+  }, [filters, activities, searchTerm]);
 
   const clearFilters = () => {
+    setSearchTerm('');
     setFilters({
       data: '',
       hora: '',
@@ -116,7 +132,7 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchTerm !== '';
 
   return (
     <Card className="mb-6">
@@ -140,6 +156,21 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
         
         <CollapsibleContent>
           <CardContent>
+            <div className="mb-4">
+              <Label htmlFor="search-activities">Pesquisar Atividades</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search-activities"
+                  type="text"
+                  placeholder="Pesquisar por obra, site, OTS/OSI, designação, atividade..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
               <div>
                 <Label htmlFor="filter-data">Data</Label>
