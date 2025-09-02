@@ -16,7 +16,14 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && event === 'SIGNED_IN') {
+      if (session) {
+        navigate('/');
+      }
+    });
+
+    // Check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         navigate('/');
       }
     });
