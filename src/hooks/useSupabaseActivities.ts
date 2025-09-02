@@ -281,9 +281,13 @@ export const useSupabaseActivities = () => {
         status: activity.status,
       }));
 
+      // Use upsert to avoid conflicts and preserve existing data
       const { error } = await supabase
         .from('activities')
-        .insert(activitiesData);
+        .upsert(activitiesData, { 
+          onConflict: 'user_id,data,hora,obra,site,ots_osi,designacao',
+          ignoreDuplicates: false 
+        });
 
       if (error) throw error;
 

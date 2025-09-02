@@ -17,43 +17,46 @@ export const useSupabaseOsiActivities = () => {
     getUser();
   }, []);
 
-  // Fetch OSI activities
-  useEffect(() => {
+  const loadOsiActivities = async () => {
     if (!user) return;
     
-    const fetchOsiActivities = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('osi_activities')
-          .select('*')
-          .order('data', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('osi_activities')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('data', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const formattedData = data?.map(activity => ({
-          id: activity.id,
-          data: activity.data,
-          obra: activity.obra,
-          atividade: activity.atividade,
-          osi: activity.osi,
-          ativacao: activity.ativacao,
-          equipe_campo: activity.equipe_campo,
-          equipe_configuracao: activity.equipe_configuracao,
-          obs: activity.obs || '',
-          status: activity.status || 'PENDENTE',
-          user_id: activity.user_id
-        })) || [];
+      const formattedData = data?.map(activity => ({
+        id: activity.id,
+        data: activity.data,
+        obra: activity.obra,
+        atividade: activity.atividade,
+        osi: activity.osi,
+        ativacao: activity.ativacao,
+        equipe_campo: activity.equipe_campo,
+        equipe_configuracao: activity.equipe_configuracao,
+        obs: activity.obs || '',
+        status: activity.status || 'PENDENTE',
+        user_id: activity.user_id
+      })) || [];
 
-        setOsiActivities(formattedData);
-      } catch (error) {
-        console.error('Error fetching OSI activities:', error);
-        toast.error('Erro ao carregar atividades OSI');
-      } finally {
-        setLoading(false);
-      }
-    };
+      setOsiActivities(formattedData);
+    } catch (error) {
+      console.error('Error fetching OSI activities:', error);
+      toast.error('Erro ao carregar atividades OSI');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchOsiActivities();
+  // Fetch OSI activities
+  useEffect(() => {
+    if (user) {
+      loadOsiActivities();
+    }
   }, [user]);
 
   const addOsiActivity = async (activity: Omit<OsiActivity, 'id'>) => {
@@ -141,28 +144,18 @@ export const useSupabaseOsiActivities = () => {
         user_id: user.id
       }));
 
-      const { data, error } = await supabase
+      // Use upsert to avoid conflicts and preserve existing data
+      const { error } = await supabase
         .from('osi_activities')
-        .insert(activitiesWithUserId)
-        .select();
+        .upsert(activitiesWithUserId, { 
+          onConflict: 'user_id,data,obra,atividade,osi',
+          ignoreDuplicates: false 
+        });
 
       if (error) throw error;
 
-      const formattedData = data?.map(activity => ({
-        id: activity.id,
-        data: activity.data,
-        obra: activity.obra,
-        atividade: activity.atividade,
-        osi: activity.osi,
-        ativacao: activity.ativacao,
-        equipe_campo: activity.equipe_campo,
-        equipe_configuracao: activity.equipe_configuracao,
-        obs: activity.obs || '',
-        status: activity.status || 'PENDENTE',
-        user_id: activity.user_id
-      })) || [];
-
-      setOsiActivities(prev => [...formattedData, ...prev]);
+      // Reload all OSI activities instead of just adding new ones
+      await loadOsiActivities();
       toast.success(`${activities.length} atividades OSI importadas com sucesso`);
     } catch (error) {
       console.error('Error importing OSI activities:', error);
