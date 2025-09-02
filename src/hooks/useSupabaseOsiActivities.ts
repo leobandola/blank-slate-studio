@@ -144,19 +144,34 @@ export const useSupabaseOsiActivities = () => {
         user_id: user.id
       }));
 
-      // Use upsert to avoid conflicts and preserve existing data
+      // Use insert and handle duplicates gracefully
       const { error } = await supabase
         .from('osi_activities')
-        .upsert(activitiesWithUserId, { 
-          onConflict: 'user_id,data,obra,atividade,osi',
-          ignoreDuplicates: false 
-        });
+        .insert(activitiesWithUserId);
 
-      if (error) throw error;
-
-      // Reload all OSI activities instead of just adding new ones
-      await loadOsiActivities();
-      toast.success(`${activities.length} atividades OSI importadas com sucesso`);
+      if (error) {
+        // If there are duplicate entries, try individual inserts to skip duplicates
+        if (error.code === '23505') { // Unique constraint violation
+          let successCount = 0;
+          for (const activity of activitiesWithUserId) {
+            const { error: individualError } = await supabase
+              .from('osi_activities')
+              .insert([activity]);
+            
+            if (!individualError) {
+              successCount++;
+            }
+          }
+          await loadOsiActivities();
+          toast.success(`${successCount} atividades OSI importadas com sucesso! ${activitiesWithUserId.length - successCount} duplicatas ignoradas.`);
+        } else {
+          throw error;
+        }
+      } else {
+        // Reload all OSI activities instead of just adding new ones
+        await loadOsiActivities();
+        toast.success(`${activities.length} atividades OSI importadas com sucesso`);
+      }
     } catch (error) {
       console.error('Error importing OSI activities:', error);
       toast.error('Erro ao importar atividades OSI');

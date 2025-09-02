@@ -281,18 +281,33 @@ export const useSupabaseActivities = () => {
         status: activity.status,
       }));
 
-      // Use upsert to avoid conflicts and preserve existing data
+      // Use insert and handle duplicates gracefully
       const { error } = await supabase
         .from('activities')
-        .upsert(activitiesData, { 
-          onConflict: 'user_id,data,hora,obra,site,ots_osi,designacao',
-          ignoreDuplicates: false 
-        });
+        .insert(activitiesData);
 
-      if (error) throw error;
-
-      await loadActivities();
-      toast.success(`${importedActivities.length} atividades importadas com sucesso!`);
+      if (error) {
+        // If there are duplicate entries, try individual inserts to skip duplicates
+        if (error.code === '23505') { // Unique constraint violation
+          let successCount = 0;
+          for (const activity of activitiesData) {
+            const { error: individualError } = await supabase
+              .from('activities')
+              .insert([activity]);
+            
+            if (!individualError) {
+              successCount++;
+            }
+          }
+          await loadActivities();
+          toast.success(`${successCount} atividades importadas com sucesso! ${activitiesData.length - successCount} duplicatas ignoradas.`);
+        } else {
+          throw error;
+        }
+      } else {
+        await loadActivities();
+        toast.success(`${importedActivities.length} atividades importadas com sucesso!`);
+      }
     } catch (error) {
       console.error('Error importing activities:', error);
       toast.error('Erro ao importar atividades');
