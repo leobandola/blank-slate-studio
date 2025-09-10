@@ -138,39 +138,59 @@ export const useSupabaseOsiActivities = () => {
   const importOsiActivities = async (activities: OsiActivity[]) => {
     if (!user) return;
 
+    // Limit to 5000 activities maximum
+    if (activities.length > 5000) {
+      toast.error('Limite máximo de 5000 atividades OSI por importação');
+      return;
+    }
+
     try {
       const activitiesWithUserId = activities.map(activity => ({
         ...activity,
         user_id: user.id
       }));
 
-      // Use insert and handle duplicates gracefully
-      const { error } = await supabase
-        .from('osi_activities')
-        .insert(activitiesWithUserId);
+      // Process in batches of 1000 to avoid Supabase limitations
+      const batchSize = 1000;
+      let totalSuccessCount = 0;
+      let totalDuplicateCount = 0;
 
-      if (error) {
-        // If there are duplicate entries, try individual inserts to skip duplicates
-        if (error.code === '23505') { // Unique constraint violation
-          let successCount = 0;
-          for (const activity of activitiesWithUserId) {
-            const { error: individualError } = await supabase
-              .from('osi_activities')
-              .insert([activity]);
-            
-            if (!individualError) {
-              successCount++;
+      for (let i = 0; i < activitiesWithUserId.length; i += batchSize) {
+        const batch = activitiesWithUserId.slice(i, i + batchSize);
+        
+        const { error } = await supabase
+          .from('osi_activities')
+          .insert(batch);
+
+        if (error) {
+          // If there are duplicate entries, try individual inserts to skip duplicates
+          if (error.code === '23505') { // Unique constraint violation
+            let batchSuccessCount = 0;
+            for (const activity of batch) {
+              const { error: individualError } = await supabase
+                .from('osi_activities')
+                .insert([activity]);
+              
+              if (!individualError) {
+                batchSuccessCount++;
+              }
             }
+            totalSuccessCount += batchSuccessCount;
+            totalDuplicateCount += (batch.length - batchSuccessCount);
+          } else {
+            throw error;
           }
-          await loadOsiActivities();
-          toast.success(`${successCount} atividades OSI importadas com sucesso! ${activitiesWithUserId.length - successCount} duplicatas ignoradas.`);
         } else {
-          throw error;
+          totalSuccessCount += batch.length;
         }
+      }
+
+      await loadOsiActivities();
+      
+      if (totalDuplicateCount > 0) {
+        toast.success(`${totalSuccessCount} atividades OSI importadas com sucesso! ${totalDuplicateCount} duplicatas ignoradas.`);
       } else {
-        // Reload all OSI activities instead of just adding new ones
-        await loadOsiActivities();
-        toast.success(`${activities.length} atividades OSI importadas com sucesso`);
+        toast.success(`${totalSuccessCount} atividades OSI importadas com sucesso!`);
       }
     } catch (error) {
       console.error('Error importing OSI activities:', error);

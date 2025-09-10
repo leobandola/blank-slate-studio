@@ -263,6 +263,12 @@ export const useSupabaseActivities = () => {
   const importActivities = async (importedActivities: Activity[]) => {
     if (!user) return;
 
+    // Limit to 5000 activities maximum
+    if (importedActivities.length > 5000) {
+      toast.error('Limite máximo de 5000 atividades por importação');
+      return;
+    }
+
     try {
       const activitiesData = importedActivities.map(activity => ({
         user_id: user.id,
@@ -281,32 +287,47 @@ export const useSupabaseActivities = () => {
         status: activity.status,
       }));
 
-      // Use insert and handle duplicates gracefully
-      const { error } = await supabase
-        .from('activities')
-        .insert(activitiesData);
+      // Process in batches of 1000 to avoid Supabase limitations
+      const batchSize = 1000;
+      let totalSuccessCount = 0;
+      let totalDuplicateCount = 0;
 
-      if (error) {
-        // If there are duplicate entries, try individual inserts to skip duplicates
-        if (error.code === '23505') { // Unique constraint violation
-          let successCount = 0;
-          for (const activity of activitiesData) {
-            const { error: individualError } = await supabase
-              .from('activities')
-              .insert([activity]);
-            
-            if (!individualError) {
-              successCount++;
+      for (let i = 0; i < activitiesData.length; i += batchSize) {
+        const batch = activitiesData.slice(i, i + batchSize);
+        
+        const { error } = await supabase
+          .from('activities')
+          .insert(batch);
+
+        if (error) {
+          // If there are duplicate entries, try individual inserts to skip duplicates
+          if (error.code === '23505') { // Unique constraint violation
+            let batchSuccessCount = 0;
+            for (const activity of batch) {
+              const { error: individualError } = await supabase
+                .from('activities')
+                .insert([activity]);
+              
+              if (!individualError) {
+                batchSuccessCount++;
+              }
             }
+            totalSuccessCount += batchSuccessCount;
+            totalDuplicateCount += (batch.length - batchSuccessCount);
+          } else {
+            throw error;
           }
-          await loadActivities();
-          toast.success(`${successCount} atividades importadas com sucesso! ${activitiesData.length - successCount} duplicatas ignoradas.`);
         } else {
-          throw error;
+          totalSuccessCount += batch.length;
         }
+      }
+
+      await loadActivities();
+      
+      if (totalDuplicateCount > 0) {
+        toast.success(`${totalSuccessCount} atividades importadas com sucesso! ${totalDuplicateCount} duplicatas ignoradas.`);
       } else {
-        await loadActivities();
-        toast.success(`${importedActivities.length} atividades importadas com sucesso!`);
+        toast.success(`${totalSuccessCount} atividades importadas com sucesso!`);
       }
     } catch (error) {
       console.error('Error importing activities:', error);
