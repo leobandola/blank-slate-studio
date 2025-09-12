@@ -329,6 +329,13 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
 
           if (processedFiles === totalFiles) {
             // All files processed
+            // Check activity limit
+            if (allImportedActivities.length > 5000) {
+              toast.error('Limite máximo de 5000 atividades por importação');
+              event.target.value = '';
+              return;
+            }
+            
             onImportActivities(allImportedActivities);
             toast.success(`${allImportedActivities.length} atividades importadas de ${totalFiles} arquivo(s)`);
             
@@ -342,6 +349,13 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
           
           if (processedFiles === totalFiles && allImportedActivities.length > 0) {
             // Some files were successful
+            // Check activity limit
+            if (allImportedActivities.length > 5000) {
+              toast.error('Limite máximo de 5000 atividades por importação');
+              event.target.value = '';
+              return;
+            }
+            
             onImportActivities(allImportedActivities);
             toast.success(`${allImportedActivities.length} atividades importadas com sucesso`);
             event.target.value = '';
@@ -478,6 +492,13 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
           processedFiles++;
 
           if (processedFiles === totalFiles) {
+            // Check OSI activity limit
+            if (allImportedOsiActivities.length > 5000) {
+              toast.error('Limite máximo de 5000 atividades OSI por importação');
+              event.target.value = '';
+              return;
+            }
+            
             onImportOsiActivities(allImportedOsiActivities);
             toast.success(`${allImportedOsiActivities.length} atividades OSI importadas de ${totalFiles} arquivo(s)`);
             event.target.value = '';
@@ -488,6 +509,13 @@ export const ExportImport = ({ activities, onImportActivities, osiActivities, on
           console.error('OSI Import error:', error);
           
           if (processedFiles === totalFiles && allImportedOsiActivities.length > 0) {
+            // Check OSI activity limit
+            if (allImportedOsiActivities.length > 5000) {
+              toast.error('Limite máximo de 5000 atividades OSI por importação');
+              event.target.value = '';
+              return;
+            }
+            
             onImportOsiActivities(allImportedOsiActivities);
             toast.success(`${allImportedOsiActivities.length} atividades OSI importadas com sucesso`);
             event.target.value = '';
