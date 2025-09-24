@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus, FileSpreadsheet, Copy } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ export const ActivityTable = ({
 }: ActivityTableProps) => {
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const startEdit = (id: string, field: string, currentValue: string) => {
     setEditingCell({ id, field });
@@ -46,6 +48,31 @@ export const ActivityTable = ({
     setEditingCell(null);
     setEditValue('');
   };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedActivities = React.useMemo(() => {
+    if (!sortConfig) return activities;
+
+    return [...activities].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof Activity] || '';
+      const bValue = b[sortConfig.key as keyof Activity] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [activities, sortConfig]);
 
   const exportFilteredActivities = () => {
     if (activities.length === 0) {
@@ -299,17 +326,36 @@ export const ActivityTable = ({
                 {ACTIVITY_COLUMNS.map((column) => (
                   <th
                     key={column.key}
-                    className="text-left p-3 font-medium text-sm bg-muted/50"
+                    className="text-left p-3 font-medium text-sm bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors select-none"
                     style={{ minWidth: column.width }}
+                    onClick={() => handleSort(column.key)}
                   >
-                    {column.label}
+                    <div className="flex items-center justify-between">
+                      <span>{column.label}</span>
+                      <div className="flex flex-col">
+                        <ChevronUp 
+                          className={`h-3 w-3 ${
+                            sortConfig?.key === column.key && sortConfig.direction === 'asc' 
+                              ? 'text-primary' 
+                              : 'text-muted-foreground/50'
+                          }`} 
+                        />
+                        <ChevronDown 
+                          className={`h-3 w-3 -mt-1 ${
+                            sortConfig?.key === column.key && sortConfig.direction === 'desc' 
+                              ? 'text-primary' 
+                              : 'text-muted-foreground/50'
+                          }`} 
+                        />
+                      </div>
+                    </div>
                   </th>
                 ))}
                 <th className="text-left p-3 font-medium text-sm w-24 bg-muted/50">AÇÕES</th>
               </tr>
             </thead>
             <tbody>
-              {activities.length === 0 ? (
+              {sortedActivities.length === 0 ? (
                 <tr>
                   <td
                     colSpan={ACTIVITY_COLUMNS.length + 1}
@@ -319,7 +365,7 @@ export const ActivityTable = ({
                   </td>
                 </tr>
               ) : (
-                activities.map((activity) => {
+                sortedActivities.map((activity) => {
                   const statusColor = getStatusColor(activity.status);
                   return (
                     <tr

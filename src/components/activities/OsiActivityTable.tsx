@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Copy, Download, Plus } from 'lucide-react';
+import { Trash2, Copy, Download, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -29,6 +29,7 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
 }) => {
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const startEdit = (id: string, field: string, currentValue: string) => {
     setEditingCell({ id, field });
@@ -47,6 +48,31 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
     setEditingCell(null);
     setEditValue('');
   };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedActivities = React.useMemo(() => {
+    if (!sortConfig) return activities;
+
+    return [...activities].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof OsiActivity] || '';
+      const bValue = b[sortConfig.key as keyof OsiActivity] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [activities, sortConfig]);
 
   const exportFilteredActivities = () => {
     if (activities.length === 0) {
@@ -202,17 +228,36 @@ export const OsiActivityTable: React.FC<OsiActivityTableProps> = ({
                 {OSI_ACTIVITY_COLUMNS.map((column) => (
                   <TableHead 
                     key={column.key} 
-                    className="font-semibold text-center border-r last:border-r-0"
+                    className="font-semibold text-center border-r last:border-r-0 cursor-pointer hover:bg-muted/50 transition-colors select-none"
                     style={{ minWidth: column.width }}
+                    onClick={() => handleSort(column.key)}
                   >
-                    {column.label}
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{column.label}</span>
+                      <div className="flex flex-col">
+                        <ChevronUp 
+                          className={`h-3 w-3 ${
+                            sortConfig?.key === column.key && sortConfig.direction === 'asc' 
+                              ? 'text-primary' 
+                              : 'text-muted-foreground/50'
+                          }`} 
+                        />
+                        <ChevronDown 
+                          className={`h-3 w-3 -mt-1 ${
+                            sortConfig?.key === column.key && sortConfig.direction === 'desc' 
+                              ? 'text-primary' 
+                              : 'text-muted-foreground/50'
+                          }`} 
+                        />
+                      </div>
+                    </div>
                   </TableHead>
                 ))}
                 <TableHead className="w-16 text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activities.map((activity) => (
+              {sortedActivities.map((activity) => (
                 <TableRow key={activity.id} className="hover:bg-muted/50">
                   {OSI_ACTIVITY_COLUMNS.map((column) => {
                     const value = activity[column.key as keyof OsiActivity] || '';
