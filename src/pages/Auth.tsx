@@ -31,19 +31,6 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const createAdminUser = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-admin-user');
-      if (error) {
-        console.error('Error creating admin user:', error);
-      } else {
-        console.log('Admin user created:', data);
-      }
-    } catch (error) {
-      console.error('Failed to create admin user:', error);
-    }
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -55,60 +42,20 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Implementar timeout para evitar travamento
-      const loginPromise = supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Login timeout')), 15000)
-      );
-
-      const { error } = await Promise.race([loginPromise, timeoutPromise]) as any;
-
       if (error) {
-        // If invalid credentials and trying with admin user, create it first
-        if (error.message === 'Invalid login credentials' && email === 'leolmo@gmail.com') {
-          toast.info('Criando usuário administrador...');
-          await createAdminUser();
-          
-          // Try login again with timeout
-          const retryPromise = supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          const retryTimeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Retry login timeout')), 15000)
-          );
-
-          const { error: retryError } = await Promise.race([retryPromise, retryTimeoutPromise]) as any;
-          
-          if (retryError) {
-            if (retryError.message === 'Retry login timeout') {
-              toast.error('Timeout no login. Tente novamente.');
-            } else {
-              toast.error(retryError.message);
-            }
-          } else {
-            toast.success('Login realizado com sucesso!');
-          }
-        } else if (error.message === 'Login timeout') {
-          toast.error('Timeout no login. Verifique sua conexão e tente novamente.');
-        } else {
-          toast.error(error.message);
-        }
+        toast.error('Email ou senha inválidos');
+        console.error('Auth error:', error);
       } else {
         toast.success('Login realizado com sucesso!');
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      if (error.message?.includes('timeout')) {
-        toast.error('Timeout no login. Verifique sua conexão e tente novamente.');
-      } else {
-        toast.error('Erro inesperado. Tente novamente.');
-      }
+      toast.error('Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
