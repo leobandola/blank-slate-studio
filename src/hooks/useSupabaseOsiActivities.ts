@@ -150,8 +150,8 @@ export const useSupabaseOsiActivities = () => {
         user_id: user.id
       }));
 
-      // Process in batches of 1000 to avoid Supabase limitations
-      const batchSize = 1000;
+      // Process in batches of 5000 to avoid Supabase limitations
+      const batchSize = 5000;
       let totalSuccessCount = 0;
       let totalDuplicateCount = 0;
 
