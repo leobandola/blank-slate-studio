@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
 import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus, AlertTriangle, Clock, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -11,6 +12,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { TagManager, TagDisplay } from '@/components/tags/TagManager';
 import { isBefore, startOfDay, addDays } from 'date-fns';
+import { DeadlineBadge } from './DeadlineBadge';
+import { BulkActions } from './BulkActions';
 
 interface ActivityTableProps {
   activities: Activity[];
@@ -36,6 +39,7 @@ export const ActivityTable = ({
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const startEdit = (id: string, field: string, currentValue: string) => {
     setEditingCell({ id, field });
@@ -63,6 +67,34 @@ export const ActivityTable = ({
     setSortConfig({ key, direction });
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedActivities.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedActivities.map(a => a.id!)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
+
+  const handleBulkStatusChange = (status: string) => {
+    selectedIds.forEach(id => onUpdateActivity(id, { status }));
+    toast.success(`${selectedIds.size} atividades atualizadas`);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (!confirm(`Excluir ${selectedIds.size} atividades?`)) return;
+    selectedIds.forEach(id => onDeleteActivity(id));
+    toast.success(`${selectedIds.size} atividades excluídas`);
+    setSelectedIds(new Set());
+  };
+
   const sortedActivities = React.useMemo(() => {
     if (!sortConfig) return activities;
 
@@ -86,55 +118,29 @@ export const ActivityTable = ({
       return;
     }
 
-    // Create worksheet data
     const worksheetData = [
       ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'],
       ...activities.map(activity => [
-        activity.data,
-        activity.hora,
-        activity.obra,
-        activity.site,
-        activity.otsOsi,
-        activity.designacao,
-        activity.equipeConfiguracao,
-        activity.cidade,
-        activity.empresa,
-        activity.equipe,
-        activity.atividade,
-        activity.observacao,
-        activity.status
+        activity.data, activity.hora, activity.obra, activity.site, activity.otsOsi,
+        activity.designacao, activity.equipeConfiguracao, activity.cidade, activity.empresa,
+        activity.equipe, activity.atividade, activity.observacao, activity.status
       ])
     ];
 
-    // Create workbook and worksheet
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     
-    // Define cell styles
     if (!worksheet['!rows']) worksheet['!rows'] = [];
     if (!worksheet['!cols']) worksheet['!cols'] = [];
     
-    // Set column widths
     worksheet['!cols'] = [
-      { wch: 12 }, // DATA
-      { wch: 8 },  // HORA
-      { wch: 15 }, // OBRA
-      { wch: 12 }, // SITE
-      { wch: 12 }, // OTS/OSI
-      { wch: 20 }, // DESIGNAÇÃO
-      { wch: 18 }, // EQUIPE CONFIGURAÇÃO
-      { wch: 15 }, // CIDADE
-      { wch: 15 }, // EMPRESA
-      { wch: 12 }, // EQUIPE
-      { wch: 25 }, // ATIVIDADE
-      { wch: 30 }, // OBSERVAÇÃO
-      { wch: 15 }  // STATUS
+      { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 12 }, { wch: 12 },
+      { wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 12 },
+      { wch: 25 }, { wch: 30 }, { wch: 15 }
     ];
 
-    // Apply styles to all cells
     const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
     
-    // Style header row
     for (let col = 0; col <= range.e.c; col++) {
       const cellAddress = XLSX.utils.encode_cell({ c: col, r: 0 });
       if (!worksheet[cellAddress]) continue;
@@ -151,7 +157,6 @@ export const ActivityTable = ({
       };
     }
     
-    // Style data rows
     for (let row = 1; row <= range.e.r; row++) {
       const activity = activities[row - 1];
       if (!activity) continue;
@@ -159,7 +164,6 @@ export const ActivityTable = ({
       const statusColor = activity.status ? getStatusColor(activity.status) : '#FFFFFF';
       const statusColorHex = statusColor.replace('#', '');
       
-      // Calculate if we need light or dark text based on background
       const rgb = parseInt(statusColorHex, 16);
       const r = (rgb >> 16) & 255;
       const g = (rgb >> 8) & 255;
@@ -186,11 +190,8 @@ export const ActivityTable = ({
     }
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Atividades Filtradas');
-
-    // Generate filename with current date
     const today = new Date().toISOString().split('T')[0];
     const filename = `atividades_filtradas_${today}.xlsx`;
-    
     XLSX.writeFile(workbook, filename);
     toast.success(`${activities.length} atividades exportadas para ${filename}`);
   };
@@ -201,23 +202,17 @@ export const ActivityTable = ({
       return;
     }
 
-    // Create HTML table with inline styles for colors
     const headers = ['DATA', 'HORA', 'OBRA', 'SITE', 'OTS / OSI', 'DESIGNAÇÃO', 'EQUIPE CONFIGURAÇÃO', 'CIDADE', 'EMPRESA', 'EQUIPE', 'ATIVIDADE', 'OBSERVAÇÃO', 'STATUS'];
     
     let htmlTable = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">';
-    
-    // Header row
     htmlTable += '<tr style="background-color: #D3D3D3; font-weight: bold; text-align: center;">';
     headers.forEach(header => {
       htmlTable += `<td style="border: 1px solid #000; padding: 4px; background-color: #D3D3D3; font-weight: bold;">${header}</td>`;
     });
     htmlTable += '</tr>';
     
-    // Data rows
     activities.forEach((activity) => {
       const statusColor = activity.status ? getStatusColor(activity.status) : '#FFFFFF';
-      
-      // Calculate text color based on background brightness
       const rgb = parseInt(statusColor.replace('#', ''), 16);
       const r = (rgb >> 16) & 255;
       const g = (rgb >> 8) & 255;
@@ -226,84 +221,54 @@ export const ActivityTable = ({
       const textColor = brightness > 128 ? '#000000' : '#FFFFFF';
       
       htmlTable += `<tr style="background-color: ${statusColor}; color: ${textColor};">`;
-      
       const values = [
-        activity.data,
-        activity.hora,
-        activity.obra,
-        activity.site,
-        activity.otsOsi,
-        activity.designacao,
-        activity.equipeConfiguracao,
-        activity.cidade,
-        activity.empresa,
-        activity.equipe,
-        activity.atividade,
-        activity.observacao,
-        activity.status
+        activity.data, activity.hora, activity.obra, activity.site, activity.otsOsi,
+        activity.designacao, activity.equipeConfiguracao, activity.cidade, activity.empresa,
+        activity.equipe, activity.atividade, activity.observacao, activity.status
       ];
-      
       values.forEach((value) => {
         htmlTable += `<td style="border: 1px solid #000; padding: 4px; background-color: ${statusColor}; color: ${textColor};">${value || ''}</td>`;
       });
-      
       htmlTable += '</tr>';
     });
-    
     htmlTable += '</table>';
 
     try {
-      // Create clipboard item with HTML format
       const clipboardItem = new ClipboardItem({
         'text/html': new Blob([htmlTable], { type: 'text/html' }),
         'text/plain': new Blob([
           headers.join('\t') + '\n' + 
           activities.map(activity => [
-            activity.data,
-            activity.hora,
-            activity.obra,
-            activity.site,
-            activity.otsOsi,
-            activity.designacao,
-            activity.equipeConfiguracao,
-            activity.cidade,
-            activity.empresa,
-            activity.equipe,
-            activity.atividade,
-            activity.observacao,
-            activity.status
+            activity.data, activity.hora, activity.obra, activity.site, activity.otsOsi,
+            activity.designacao, activity.equipeConfiguracao, activity.cidade, activity.empresa,
+            activity.equipe, activity.atividade, activity.observacao, activity.status
           ].join('\t')).join('\n')
         ], { type: 'text/plain' })
       });
-
       await navigator.clipboard.write([clipboardItem]);
       toast.success(`${activities.length} atividades copiadas com formatação completa`);
     } catch (error) {
-      // Fallback to text-only copy
       const textData = headers.join('\t') + '\n' + 
         activities.map(activity => [
-          activity.data,
-          activity.hora,
-          activity.obra,
-          activity.site,
-          activity.otsOsi,
-          activity.designacao,
-          activity.equipeConfiguracao,
-          activity.cidade,
-          activity.empresa,
-          activity.equipe,
-          activity.atividade,
-          activity.observacao,
-          activity.status
+          activity.data, activity.hora, activity.obra, activity.site, activity.otsOsi,
+          activity.designacao, activity.equipeConfiguracao, activity.cidade, activity.empresa,
+          activity.equipe, activity.atividade, activity.observacao, activity.status
         ].join('\t')).join('\n');
-      
       await navigator.clipboard.writeText(textData);
       toast.warning('Dados copiados sem formatação (seu navegador não suporta cópia com formatação)');
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col gap-2">
+      <BulkActions
+        selectedCount={selectedIds.size}
+        statuses={statuses}
+        onBulkStatusChange={handleBulkStatusChange}
+        onBulkDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+
       <Card className="flex-1 flex flex-col overflow-hidden shadow-medium">
         <div className="p-4 border-b bg-gradient-secondary flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -329,6 +294,12 @@ export const ActivityTable = ({
           <table className="w-full">
             <thead className="sticky top-0 z-10">
               <tr className="border-b bg-muted/50">
+                <th className="p-3 w-10 bg-muted/50">
+                  <Checkbox
+                    checked={selectedIds.size === sortedActivities.length && sortedActivities.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </th>
                 {ACTIVITY_COLUMNS.map((column) => (
                   <th
                     key={column.key}
@@ -357,6 +328,7 @@ export const ActivityTable = ({
                     </div>
                   </th>
                 ))}
+                <th className="text-left p-3 font-medium text-sm w-32 bg-muted/50">PRAZO</th>
                 <th className="text-left p-3 font-medium text-sm w-24 bg-muted/50">AÇÕES</th>
               </tr>
             </thead>
@@ -364,7 +336,7 @@ export const ActivityTable = ({
               {sortedActivities.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={ACTIVITY_COLUMNS.length + 1}
+                    colSpan={ACTIVITY_COLUMNS.length + 3}
                     className="text-center p-8 text-muted-foreground"
                   >
                     Nenhuma atividade cadastrada. Clique em "Nova Atividade" para começar.
@@ -381,18 +353,26 @@ export const ActivityTable = ({
                     activity.status !== 'CONCLUÍDO' && activity.status !== 'CANCELADO' &&
                     !isBefore(new Date(activity.prazo), now) && 
                     isBefore(new Date(activity.prazo), addDays(now, 3));
+                  const isSelected = selectedIds.has(activity.id!);
                   return (
                     <tr
                       key={activity.id}
                       className={cn(
                         "border-b transition-all duration-200 hover:bg-muted/30 animate-fade-in",
                         isOverdue && "bg-destructive/10 hover:bg-destructive/15",
-                        isDueSoon && "bg-status-pendente/10 hover:bg-status-pendente/15"
+                        isDueSoon && "bg-status-pendente/10 hover:bg-status-pendente/15",
+                        isSelected && "bg-primary/10 hover:bg-primary/15"
                       )}
                       style={{
-                        backgroundColor: !isOverdue && !isDueSoon && activity.status ? `${statusColor}20` : undefined,
+                        backgroundColor: !isOverdue && !isDueSoon && !isSelected && activity.status ? `${statusColor}20` : undefined,
                       }}
                     >
+                      <td className="p-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(activity.id!)}
+                        />
+                      </td>
                       {ACTIVITY_COLUMNS.map((column) => (
                         <td key={column.key} className="p-3">
                           {editingCell?.id === activity.id && editingCell?.field === column.key ? (
@@ -406,10 +386,7 @@ export const ActivityTable = ({
                                     {statuses.map((status) => (
                                       <SelectItem key={status.id} value={status.name}>
                                         <div className="flex items-center gap-2">
-                                          <div
-                                            className="w-3 h-3 rounded-full"
-                                            style={{ backgroundColor: status.color }}
-                                          />
+                                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }} />
                                           {status.name}
                                         </div>
                                       </SelectItem>
@@ -428,22 +405,8 @@ export const ActivityTable = ({
                                   autoFocus
                                 />
                               )}
-                              <Button
-                                size="sm"
-                                variant="success"
-                                onClick={saveEdit}
-                                className="h-8 px-2"
-                              >
-                                ✓
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={cancelEdit}
-                                className="h-8 px-2"
-                              >
-                                ✗
-                              </Button>
+                              <Button size="sm" variant="success" onClick={saveEdit} className="h-8 px-2">✓</Button>
+                              <Button size="sm" variant="outline" onClick={cancelEdit} className="h-8 px-2">✗</Button>
                             </div>
                           ) : (
                             <div
@@ -452,10 +415,7 @@ export const ActivityTable = ({
                             >
                               {column.key === 'status' && activity.status ? (
                                 <div className="flex items-center gap-2">
-                                  <div
-                                    className="w-3 h-3 rounded-full"
-                                    style={{ backgroundColor: statusColor }}
-                                  />
+                                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColor }} />
                                   {activity.status}
                                 </div>
                               ) : (
@@ -465,6 +425,9 @@ export const ActivityTable = ({
                           )}
                         </td>
                       ))}
+                      <td className="p-3">
+                        <DeadlineBadge prazo={activity.prazo} status={activity.status} />
+                      </td>
                       <td className="p-3">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1">
@@ -478,16 +441,6 @@ export const ActivityTable = ({
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                            )}
-                            {isOverdue && (
-                              <span className="text-destructive animate-pulse" title="Atrasada!">
-                                <AlertTriangle className="h-4 w-4" />
-                              </span>
-                            )}
-                            {isDueSoon && (
-                              <span className="text-status-pendente" title="Prazo próximo">
-                                <Clock className="h-4 w-4" />
-                              </span>
                             )}
                             {onDuplicateActivity && (
                               <Button

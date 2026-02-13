@@ -21,6 +21,8 @@ import {
   RepeatIcon,
   Target,
   GitCompareArrows,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 
 import {
@@ -53,6 +55,8 @@ const ALL_TABS = [
   { id: 'recurring', label: 'Recorrentes', icon: RepeatIcon, minRole: 'analista' },
   { id: 'goals', label: 'Metas', icon: Target, minRole: 'analista' },
   { id: 'profile', label: 'Meu Perfil', icon: User, minRole: 'analista' },
+  { id: 'timeline', label: 'Timeline', icon: Clock, minRole: 'analista' },
+  { id: 'ai-summary', label: 'Resumo IA', icon: Sparkles, minRole: 'analista' },
   { id: 'status', label: 'Status', icon: Palette, minRole: 'gerente' },
   { id: 'team-dashboard', label: 'Painel Equipes', icon: Users, minRole: 'gerente' },
   { id: 'reports', label: 'Relatórios', icon: BarChart3, minRole: 'gerente' },
