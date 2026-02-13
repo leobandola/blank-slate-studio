@@ -16,6 +16,10 @@ import {
   Sun,
   User,
   History,
+  CalendarDays,
+  FileBox,
+  RepeatIcon,
+  Target,
 } from 'lucide-react';
 
 import {
@@ -42,7 +46,11 @@ const ALL_TABS = [
   { id: 'activities', label: 'Atividades', icon: Calendar, minRole: 'analista' },
   { id: 'osi-activities', label: 'Atividades OSI', icon: Activity, minRole: 'analista' },
   { id: 'kanban', label: 'Kanban', icon: Columns3, minRole: 'analista' },
+  { id: 'calendar', label: 'Calendário', icon: CalendarDays, minRole: 'analista' },
   { id: 'add', label: 'Adicionar', icon: Plus, minRole: 'analista' },
+  { id: 'templates', label: 'Templates', icon: FileBox, minRole: 'analista' },
+  { id: 'recurring', label: 'Recorrentes', icon: RepeatIcon, minRole: 'analista' },
+  { id: 'goals', label: 'Metas', icon: Target, minRole: 'analista' },
   { id: 'profile', label: 'Meu Perfil', icon: User, minRole: 'analista' },
   { id: 'status', label: 'Status', icon: Palette, minRole: 'gerente' },
   { id: 'reports', label: 'Relatórios', icon: BarChart3, minRole: 'gerente' },
