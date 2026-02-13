@@ -6,15 +6,22 @@ import { toast } from 'sonner';
 export const useSupabaseOsiActivities = () => {
   const [osiActivities, setOsiActivities] = useState<OsiActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
 
-  // Fetch user session
+  // Auth state management - use onAuthStateChange (recommended pattern)
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        setOsiActivities([]);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadOsiActivities = async () => {

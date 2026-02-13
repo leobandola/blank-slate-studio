@@ -39,26 +39,18 @@ export function UserManagement() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Load profiles with roles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          email,
-          name,
-          created_at
-        `);
+        .select('id, email, name, created_at');
 
       if (profilesError) throw profilesError;
 
-      // Load user roles separately
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
       const usersWithRoles = profiles?.map((profile: any) => {
         const userRole = roles?.find(r => r.user_id === profile.id);
         return {
@@ -76,6 +68,28 @@ export function UserManagement() {
     }
   };
 
+  const callManageUsers = async (payload: Record<string, any>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('Sessão expirada. Faça login novamente.');
+      return null;
+    }
+
+    const { data, error } = await supabase.functions.invoke('manage-users', {
+      body: payload,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Erro na operação');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data;
+  };
+
   const handleAddUser = async () => {
     if (!newUser.email || !newUser.password) {
       toast.error('Email e senha são obrigatórios');
@@ -84,45 +98,18 @@ export function UserManagement() {
 
     setLoading(true);
     try {
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      await callManageUsers({
+        action: 'create',
         email: newUser.email,
         password: newUser.password,
-        email_confirm: true,
-        user_metadata: {
-          name: newUser.name || newUser.email
-        }
+        name: newUser.name || newUser.email,
+        role: newUser.role,
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: newUser.email,
-            name: newUser.name || newUser.email
-          });
-
-        if (profileError) throw profileError;
-
-        // Assign role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: newUser.role
-          });
-
-        if (roleError) throw roleError;
-
-        toast.success('Usuário criado com sucesso');
-        setIsAddDialogOpen(false);
-        setNewUser({ email: '', name: '', role: 'analista', password: '' });
-        loadUsers();
-      }
+      toast.success('Usuário criado com sucesso');
+      setIsAddDialogOpen(false);
+      setNewUser({ email: '', name: '', role: 'analista', password: '' });
+      loadUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
       toast.error(error.message || 'Erro ao criar usuário');
@@ -136,24 +123,20 @@ export function UserManagement() {
 
     setLoading(true);
     try {
-      // Update profile
+      // Update profile via direct query (RLS allows)
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          name: editingUser.name,
-          email: editingUser.email
-        })
+        .update({ name: editingUser.name, email: editingUser.email })
         .eq('id', editingUser.id);
 
       if (profileError) throw profileError;
 
-      // Update role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .update({ role: editingUser.role })
-        .eq('user_id', editingUser.id);
-
-      if (roleError) throw roleError;
+      // Update role via edge function
+      await callManageUsers({
+        action: 'update-role',
+        userId: editingUser.id,
+        role: editingUser.role,
+      });
 
       toast.success('Usuário atualizado com sucesso');
       setEditingUser(null);
@@ -169,10 +152,10 @@ export function UserManagement() {
   const handleDeleteUser = async (userId: string) => {
     setLoading(true);
     try {
-      // Delete user from auth (cascade will handle profiles and roles)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-
-      if (error) throw error;
+      await callManageUsers({
+        action: 'delete',
+        userId,
+      });
 
       toast.success('Usuário excluído com sucesso');
       loadUsers();
