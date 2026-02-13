@@ -1,3 +1,4 @@
+// Entry point
 import { createRoot } from 'react-dom/client'
 import { applySavedTheme } from './components/themes/ThemePicker'
 import App from './App.tsx'
