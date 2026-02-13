@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity } from '@/types/activity';
 import { Plus, Calendar } from 'lucide-react';
+import { TagManager } from '@/components/tags/TagManager';
 
 interface AddActivityFormProps {
   statuses: Array<{ id: string; name: string; color: string }>;
@@ -28,6 +29,8 @@ export const AddActivityForm = ({ statuses, onAddActivity }: AddActivityFormProp
     atividade: '',
     observacao: '',
     status: '',
+    tags: [],
+    prazo: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,6 +50,8 @@ export const AddActivityForm = ({ statuses, onAddActivity }: AddActivityFormProp
       atividade: '',
       observacao: '',
       status: '',
+      tags: [],
+      prazo: '',
     });
   };
 
@@ -201,6 +206,27 @@ export const AddActivityForm = ({ statuses, onAddActivity }: AddActivityFormProp
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="prazo">Prazo</Label>
+              <Input
+                id="prazo"
+                type="date"
+                value={formData.prazo || ''}
+                onChange={(e) => updateField('prazo', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Tags / Etiquetas</Label>
+              <div className="mt-1">
+                <TagManager
+                  selectedTags={formData.tags || []}
+                  onTagsChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+                />
+              </div>
             </div>
           </div>
 

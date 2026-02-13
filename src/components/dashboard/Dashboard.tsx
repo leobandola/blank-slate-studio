@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
 import { CalendarDays, CheckCircle2, Clock, AlertTriangle, TrendingUp, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { format, parseISO, subDays, startOfDay } from 'date-fns';
+import { format, parseISO, subDays, startOfDay, isBefore, isToday, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface DashboardProps {
@@ -28,6 +29,22 @@ export const Dashboard = ({ activities, osiActivities, statuses, getStatusColor 
 
   const todayOsi = useMemo(() =>
     osiActivities.filter(a => a.data === today), [osiActivities, today]);
+
+  // Overdue activities (prazo passed & not CONCLUÍDO)
+  const overdueActivities = useMemo(() =>
+    activities.filter(a => {
+      if (!a.prazo || a.status === 'CONCLUÍDO' || a.status === 'CANCELADO') return false;
+      return isBefore(new Date(a.prazo), startOfDay(new Date()));
+    }), [activities]);
+
+  // Due soon (next 3 days)
+  const dueSoonActivities = useMemo(() =>
+    activities.filter(a => {
+      if (!a.prazo || a.status === 'CONCLUÍDO' || a.status === 'CANCELADO') return false;
+      const prazoDate = new Date(a.prazo);
+      const now = startOfDay(new Date());
+      return !isBefore(prazoDate, now) && isBefore(prazoDate, addDays(now, 3));
+    }), [activities]);
 
   // Status distribution chart data
   const statusChartData = useMemo(() => {
@@ -91,11 +108,26 @@ export const Dashboard = ({ activities, osiActivities, statuses, getStatusColor 
       bgColor: 'bg-status-pendente/10',
     },
     {
+      title: 'Atrasadas',
+      value: overdueActivities.length,
+      icon: AlertTriangle,
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10',
+      pulse: overdueActivities.length > 0,
+    },
+    {
       title: 'Concluídas',
       value: completedActivities.length,
       icon: CheckCircle2,
       color: 'text-status-ativo',
       bgColor: 'bg-status-ativo/10',
+    },
+    {
+      title: 'Prazo Próximo',
+      value: dueSoonActivities.length,
+      icon: Clock,
+      color: 'text-status-pendente',
+      bgColor: 'bg-status-pendente/10',
     },
     {
       title: 'OSI Hoje',
@@ -109,19 +141,25 @@ export const Dashboard = ({ activities, osiActivities, statuses, getStatusColor 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {kpiCards.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
-            <Card key={index} className="shadow-soft hover-scale overflow-hidden">
-              <CardContent className="p-6">
+            <Card 
+              key={index} 
+              className={`shadow-soft hover-scale overflow-hidden animate-fade-in ${
+                (kpi as any).pulse ? 'ring-2 ring-destructive/50 animate-pulse' : ''
+              }`}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className={`text-3xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
+                    <p className="text-xs text-muted-foreground">{kpi.title}</p>
+                    <p className={`text-2xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                   </div>
-                  <div className={`p-3 rounded-xl ${kpi.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${kpi.color}`} />
+                  <div className={`p-2 rounded-xl ${kpi.bgColor}`}>
+                    <Icon className={`h-5 w-5 ${kpi.color}`} />
                   </div>
                 </div>
               </CardContent>
