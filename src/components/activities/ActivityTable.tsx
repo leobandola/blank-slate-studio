@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus, AlertTriangle, Clock } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus, AlertTriangle, Clock, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ interface ActivityTableProps {
   onDeleteActivity: (id: string) => void;
   onAddActivity: () => void;
   onDuplicateActivity?: (activity: Activity) => void;
+  onSelectActivity?: (activity: Activity) => void;
   getStatusColor: (statusName: string) => string;
 }
 
@@ -29,6 +30,7 @@ export const ActivityTable = ({
   onDeleteActivity,
   onAddActivity,
   onDuplicateActivity,
+  onSelectActivity,
   getStatusColor,
 }: ActivityTableProps) => {
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -466,6 +468,17 @@ export const ActivityTable = ({
                       <td className="p-3">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1">
+                            {onSelectActivity && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onSelectActivity(activity)}
+                                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                                title="Ver detalhes"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
                             {isOverdue && (
                               <span className="text-destructive animate-pulse" title="Atrasada!">
                                 <AlertTriangle className="h-4 w-4" />
