@@ -33,6 +33,36 @@ export const useSupabaseActivities = () => {
     if (user) {
       loadActivities();
       loadStatuses();
+
+      // Real-time subscription for activities
+      const activitiesChannel = supabase
+        .channel('activities-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'activities',
+          filter: `user_id=eq.${user.id}`,
+        }, () => {
+          loadActivities();
+        })
+        .subscribe();
+
+      // Real-time subscription for statuses
+      const statusesChannel = supabase
+        .channel('statuses-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'activity_statuses',
+        }, () => {
+          loadStatuses();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(activitiesChannel);
+        supabase.removeChannel(statusesChannel);
+      };
     }
     setLoading(false);
   }, [user, selectedDate]);

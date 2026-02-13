@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ interface ActivityTableProps {
   onUpdateActivity: (id: string, updates: Partial<Activity>) => void;
   onDeleteActivity: (id: string) => void;
   onAddActivity: () => void;
+  onDuplicateActivity?: (activity: Activity) => void;
   getStatusColor: (statusName: string) => string;
 }
 
@@ -25,6 +26,7 @@ export const ActivityTable = ({
   onUpdateActivity,
   onDeleteActivity,
   onAddActivity,
+  onDuplicateActivity,
   getStatusColor,
 }: ActivityTableProps) => {
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -449,6 +451,17 @@ export const ActivityTable = ({
                       ))}
                       <td className="p-3">
                         <div className="flex gap-1">
+                          {onDuplicateActivity && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => onDuplicateActivity(activity)}
+                              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                              title="Duplicar atividade"
+                            >
+                              <CopyPlus className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
