@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { 
   Calendar,
   Plus,
@@ -9,6 +10,10 @@ import {
   LogOut,
   Users,
   Activity,
+  LayoutDashboard,
+  Columns3,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 import {
@@ -22,6 +27,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface AppSidebarProps {
   activeTab: string;
@@ -29,25 +35,40 @@ interface AppSidebarProps {
   onSignOut: () => void;
 }
 
-const TABS = [
-  { id: 'activities', label: 'Atividades', icon: Calendar },
-  { id: 'osi-activities', label: 'Atividades OSI', icon: Activity },
-  { id: 'add', label: 'Adicionar', icon: Plus },
-  { id: 'status', label: 'Status', icon: Palette },
-  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-  { id: 'export', label: 'Importar/Exportar', icon: FileText },
-  { id: 'users', label: 'Usuários', icon: Users },
-  { id: 'settings', label: 'Configurações', icon: Settings },
+const ALL_TABS = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'analista' },
+  { id: 'activities', label: 'Atividades', icon: Calendar, minRole: 'analista' },
+  { id: 'osi-activities', label: 'Atividades OSI', icon: Activity, minRole: 'analista' },
+  { id: 'kanban', label: 'Kanban', icon: Columns3, minRole: 'analista' },
+  { id: 'add', label: 'Adicionar', icon: Plus, minRole: 'analista' },
+  { id: 'status', label: 'Status', icon: Palette, minRole: 'gerente' },
+  { id: 'reports', label: 'Relatórios', icon: BarChart3, minRole: 'gerente' },
+  { id: 'export', label: 'Importar/Exportar', icon: FileText, minRole: 'gerente' },
+  { id: 'users', label: 'Usuários', icon: Users, minRole: 'admin' },
+  { id: 'settings', label: 'Configurações', icon: Settings, minRole: 'admin' },
 ];
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  analista: 1,
+  gerente: 2,
+  admin: 3,
+};
 
 export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProps) {
   const { open } = useSidebar();
+  const { theme, setTheme } = useTheme();
+  const { role } = useUserRole();
   const [appTitle, setAppTitle] = useState(() => localStorage.getItem('appTitle') || 'Agenda Empresarial');
   const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem('appSubtitle') || 'Controle de Demandas');
   const [logo, setLogo] = useState<string>('');
 
+  const visibleTabs = ALL_TABS.filter(tab => {
+    const userLevel = ROLE_HIERARCHY[role] || 1;
+    const requiredLevel = ROLE_HIERARCHY[tab.minRole] || 1;
+    return userLevel >= requiredLevel;
+  });
+
   useEffect(() => {
-    // Load custom favicon on app start
     const customFavicon = localStorage.getItem('customFavicon');
     if (customFavicon) {
       const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
@@ -60,7 +81,6 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
       document.head.appendChild(link);
     }
 
-    // Listen for branding updates
     const handleBrandingUpdate = (event: CustomEvent) => {
       setAppTitle(event.detail.title);
       setAppSubtitle(event.detail.subtitle);
@@ -103,7 +123,7 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
           
           <SidebarGroupContent>
             <SidebarMenu>
-              {TABS.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <SidebarMenuItem key={tab.id}>
@@ -125,6 +145,15 @@ export function AppSidebar({ activeTab, onTabChange, onSignOut }: AppSidebarProp
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  tooltip={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                >
+                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={onSignOut} tooltip="Sair">
                   <LogOut className="h-4 w-4" />
