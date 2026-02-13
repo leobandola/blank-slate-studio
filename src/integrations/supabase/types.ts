@@ -177,6 +177,36 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          template_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          template_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          template_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -203,6 +233,48 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_date: string | null
+          id: string
+          metric: string
+          name: string
+          period: string
+          start_date: string
+          target_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          metric?: string
+          name: string
+          period?: string
+          start_date: string
+          target_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          metric?: string
+          name?: string
+          period?: string
+          start_date?: string
+          target_count?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -321,6 +393,54 @@ export type Database = {
           name?: string | null
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recurring_activities: {
+        Row: {
+          active: boolean
+          created_at: string
+          day_of_month: number | null
+          days_of_week: number[] | null
+          end_date: string | null
+          frequency: string
+          id: string
+          last_generated_date: string | null
+          name: string
+          start_date: string
+          template_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          day_of_month?: number | null
+          days_of_week?: number[] | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          last_generated_date?: string | null
+          name: string
+          start_date: string
+          template_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          day_of_month?: number | null
+          days_of_week?: number[] | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          last_generated_date?: string | null
+          name?: string
+          start_date?: string
+          template_data?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -28,6 +28,10 @@ import { AuditLog } from '@/components/audit/AuditLog';
 import { ActivityDetail } from '@/components/activities/ActivityDetail';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { PdfExport } from '@/components/export/PdfExport';
+import { RecurringActivities } from '@/components/recurring/RecurringActivities';
+import { ActivityTemplates } from '@/components/templates/ActivityTemplates';
+import { GoalsManager } from '@/components/goals/GoalsManager';
+import { CalendarView } from '@/components/calendar/CalendarView';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -37,8 +41,12 @@ const TAB_TITLES: Record<string, string> = {
   activities: 'Atividades',
   'osi-activities': 'Atividades OSI',
   kanban: 'Kanban Board',
+  calendar: 'Calendário',
   add: 'Adicionar Atividade',
   'add-osi': 'Adicionar Atividade OSI',
+  templates: 'Templates',
+  recurring: 'Recorrentes',
+  goals: 'Metas',
   status: 'Gerenciar Status',
   reports: 'Relatórios',
   export: 'Importar/Exportar',
@@ -120,12 +128,15 @@ const Index = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <Dashboard
-            activities={activities}
-            osiActivities={osiActivities}
-            statuses={statuses}
-            getStatusColor={getStatusColor}
-          />
+          <div className="space-y-6">
+            <Dashboard
+              activities={activities}
+              osiActivities={osiActivities}
+              statuses={statuses}
+              getStatusColor={getStatusColor}
+            />
+            <GoalsManager activities={activities} />
+          </div>
         );
       case 'activities':
         return (
@@ -180,10 +191,24 @@ const Index = () => {
             getStatusColor={getStatusColor}
           />
         );
+      case 'calendar':
+        return (
+          <CalendarView
+            activities={activities}
+            getStatusColor={getStatusColor}
+            onSelectActivity={setSelectedActivity}
+          />
+        );
       case 'add':
         return <AddActivityForm statuses={statuses} onAddActivity={addActivity} />;
       case 'add-osi':
         return <AddOsiActivityForm onAddActivity={addOsiActivity} />;
+      case 'templates':
+        return <ActivityTemplates statuses={statuses} onApplyTemplate={addActivity} />;
+      case 'recurring':
+        return <RecurringActivities statuses={statuses} />;
+      case 'goals':
+        return <GoalsManager activities={activities} />;
       case 'status':
         return <StatusManager statuses={statuses} onAddStatus={addStatus} onUpdateStatus={updateStatus} onDeleteStatus={deleteStatus} />;
       case 'reports':
