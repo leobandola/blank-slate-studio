@@ -35,6 +35,8 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { TeamDashboard } from '@/components/dashboard/TeamDashboard';
 import { ComparativeReports } from '@/components/reports/ComparativeReports';
 import { NotificationPreferences } from '@/components/notifications/NotificationPreferences';
+import { ActivityTimeline } from '@/components/timeline/ActivityTimeline';
+import { AiSummary } from '@/components/ai/AiSummary';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -61,6 +63,8 @@ const TAB_TITLES: Record<string, string> = {
   profile: 'Meu Perfil',
   audit: 'Log de Auditoria',
   'notification-prefs': 'Preferências de Notificação',
+  'timeline': 'Timeline',
+  'ai-summary': 'Resumo IA',
 };
 
 const Index = () => {
@@ -258,6 +262,10 @@ const Index = () => {
         return <UserProfile />;
       case 'audit':
         return <AuditLog />;
+      case 'timeline':
+        return <ActivityTimeline />;
+      case 'ai-summary':
+        return <AiSummary />;
       default:
         return <div>Página não encontrada</div>;
     }
