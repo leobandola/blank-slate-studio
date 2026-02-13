@@ -26,6 +26,8 @@ import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { UserProfile } from '@/components/profile/UserProfile';
 import { AuditLog } from '@/components/audit/AuditLog';
 import { ActivityDetail } from '@/components/activities/ActivityDetail';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { PdfExport } from '@/components/export/PdfExport';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -220,7 +222,14 @@ const Index = () => {
             <h1 className="ml-4 font-semibold text-lg">
               {TAB_TITLES[activeTab] || 'Página'}
             </h1>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              {(activeTab === 'activities' || activeTab === 'reports') && (
+                <PdfExport activities={filteredActivities.length > 0 ? filteredActivities : activities} title="Atividades" />
+              )}
+              {(activeTab === 'osi-activities') && (
+                <PdfExport osiActivities={filteredOsiActivities.length > 0 ? filteredOsiActivities : osiActivities} title="OSI" />
+              )}
+              <NotificationBell />
               <GlobalSearch
                 activities={activities}
                 osiActivities={osiActivities}

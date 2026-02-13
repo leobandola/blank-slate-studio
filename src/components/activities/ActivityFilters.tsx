@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Filter, X, Search } from 'lucide-react';
 import { Activity, ActivityStatus } from '@/types/activity';
+import { SavedFilters } from '@/components/filters/SavedFilters';
 
 interface ActivityFiltersProps {
   activities: Activity[];
@@ -309,7 +310,7 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
               </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={applyFilters} className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
                 Aplicar Filtros
@@ -318,6 +319,12 @@ export function ActivityFilters({ activities, statuses, onFilter }: ActivityFilt
                 <X className="h-4 w-4" />
                 Limpar Filtros
               </Button>
+              <SavedFilters
+                currentFilters={filters as unknown as Record<string, string>}
+                onApplyFilter={(savedFilters) => {
+                  setFilters(savedFilters as unknown as FilterState);
+                }}
+              />
             </div>
           </CardContent>
         </CollapsibleContent>
