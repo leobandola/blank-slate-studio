@@ -24,6 +24,9 @@ export const useUserRole = () => {
 
         if (!error && data) {
           setRole(data.role as UserRole);
+        } else {
+          // Default to admin if no role found (for existing users without role assignment)
+          setRole('admin');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
