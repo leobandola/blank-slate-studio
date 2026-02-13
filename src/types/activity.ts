@@ -14,6 +14,8 @@ export interface Activity {
   observacao: string;
   status: string;
   statusColor?: string;
+  tags?: string[];
+  prazo?: string;
 }
 
 export interface ActivityStatus {

@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity } from '@/types/activity';
-import { Columns3 } from 'lucide-react';
+import { Columns3, AlertTriangle, Clock } from 'lucide-react';
+import { TagDisplay } from '@/components/tags/TagManager';
+import { isBefore, startOfDay, addDays } from 'date-fns';
 
 interface KanbanBoardProps {
   activities: Activity[];
@@ -78,10 +80,21 @@ export const KanbanBoard = ({ activities, statuses, onUpdateActivity, getStatusC
                       Nenhuma atividade
                     </p>
                   ) : (
-                    columnActivities.map((activity) => (
+                    columnActivities.map((activity) => {
+                      const now = startOfDay(new Date());
+                      const isOverdue = activity.prazo && 
+                        activity.status !== 'CONCLUÍDO' && activity.status !== 'CANCELADO' &&
+                        isBefore(new Date(activity.prazo), now);
+                      const isDueSoon = activity.prazo && 
+                        activity.status !== 'CONCLUÍDO' && activity.status !== 'CANCELADO' &&
+                        !isBefore(new Date(activity.prazo), now) && 
+                        isBefore(new Date(activity.prazo), addDays(now, 3));
+                      return (
                       <Card
                         key={activity.id}
-                        className="shadow-soft hover-scale cursor-default animate-scale-in"
+                        className={`shadow-soft hover-scale cursor-default animate-scale-in transition-all duration-200 ${
+                          isOverdue ? 'ring-2 ring-destructive/50' : isDueSoon ? 'ring-1 ring-status-pendente/50' : ''
+                        }`}
                       >
                         <CardContent className="p-3 space-y-2">
                           <div className="flex items-center justify-between">
@@ -111,6 +124,25 @@ export const KanbanBoard = ({ activities, statuses, onUpdateActivity, getStatusC
                             </p>
                           )}
 
+                          {/* Deadline indicators */}
+                          {isOverdue && (
+                            <div className="flex items-center gap-1 text-destructive text-xs animate-pulse">
+                              <AlertTriangle className="h-3 w-3" />
+                              <span>Atrasada! Prazo: {activity.prazo}</span>
+                            </div>
+                          )}
+                          {isDueSoon && (
+                            <div className="flex items-center gap-1 text-status-pendente text-xs">
+                              <Clock className="h-3 w-3" />
+                              <span>Prazo: {activity.prazo}</span>
+                            </div>
+                          )}
+
+                          {/* Tags */}
+                          {activity.tags && activity.tags.length > 0 && (
+                            <TagDisplay tags={activity.tags} />
+                          )}
+
                           {/* Move to status */}
                           <Select
                             value={activity.status}
@@ -132,7 +164,8 @@ export const KanbanBoard = ({ activities, statuses, onUpdateActivity, getStatusC
                           </Select>
                         </CardContent>
                       </Card>
-                    ))
+                    );})
+
                   )}
                 </div>
               </div>

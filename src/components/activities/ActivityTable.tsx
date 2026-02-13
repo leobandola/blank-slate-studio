@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Activity, ACTIVITY_COLUMNS } from '@/types/activity';
-import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus } from 'lucide-react';
+import { Edit, Trash2, Plus, FileSpreadsheet, Copy, ChevronUp, ChevronDown, CopyPlus, AlertTriangle, Clock } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { TagManager, TagDisplay } from '@/components/tags/TagManager';
+import { isBefore, startOfDay, addDays } from 'date-fns';
 
 interface ActivityTableProps {
   activities: Activity[];
@@ -369,12 +371,24 @@ export const ActivityTable = ({
               ) : (
                 sortedActivities.map((activity) => {
                   const statusColor = getStatusColor(activity.status);
+                  const now = startOfDay(new Date());
+                  const isOverdue = activity.prazo && 
+                    activity.status !== 'CONCLUÍDO' && activity.status !== 'CANCELADO' &&
+                    isBefore(new Date(activity.prazo), now);
+                  const isDueSoon = activity.prazo && 
+                    activity.status !== 'CONCLUÍDO' && activity.status !== 'CANCELADO' &&
+                    !isBefore(new Date(activity.prazo), now) && 
+                    isBefore(new Date(activity.prazo), addDays(now, 3));
                   return (
                     <tr
                       key={activity.id}
-                      className="border-b hover:bg-muted/30 transition-colors"
+                      className={cn(
+                        "border-b transition-all duration-200 hover:bg-muted/30 animate-fade-in",
+                        isOverdue && "bg-destructive/10 hover:bg-destructive/15",
+                        isDueSoon && "bg-status-pendente/10 hover:bg-status-pendente/15"
+                      )}
                       style={{
-                        backgroundColor: activity.status ? `${statusColor}20` : undefined,
+                        backgroundColor: !isOverdue && !isDueSoon && activity.status ? `${statusColor}20` : undefined,
                       }}
                     >
                       {ACTIVITY_COLUMNS.map((column) => (
@@ -450,26 +464,41 @@ export const ActivityTable = ({
                         </td>
                       ))}
                       <td className="p-3">
-                        <div className="flex gap-1">
-                          {onDuplicateActivity && (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            {isOverdue && (
+                              <span className="text-destructive animate-pulse" title="Atrasada!">
+                                <AlertTriangle className="h-4 w-4" />
+                              </span>
+                            )}
+                            {isDueSoon && (
+                              <span className="text-status-pendente" title="Prazo próximo">
+                                <Clock className="h-4 w-4" />
+                              </span>
+                            )}
+                            {onDuplicateActivity && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onDuplicateActivity(activity)}
+                                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                                title="Duplicar atividade"
+                              >
+                                <CopyPlus className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => onDuplicateActivity(activity)}
-                              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
-                              title="Duplicar atividade"
+                              onClick={() => onDeleteActivity(activity.id!)}
+                              className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <CopyPlus className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
+                          </div>
+                          {activity.tags && activity.tags.length > 0 && (
+                            <TagDisplay tags={activity.tags} />
                           )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => onDeleteActivity(activity.id!)}
-                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </td>
                     </tr>

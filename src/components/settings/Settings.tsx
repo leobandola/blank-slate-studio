@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Settings as SettingsIcon, Download, Upload, Trash2, Image } from 'lucide-react';
 import { toast } from 'sonner';
+import { ThemePicker } from '@/components/themes/ThemePicker';
 
 interface SettingsProps {
   activities: any[];
@@ -127,7 +128,8 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
+      <ThemePicker />
       <Card className="shadow-medium">
         <CardHeader className="bg-gradient-secondary">
           <CardTitle className="flex items-center gap-2">
