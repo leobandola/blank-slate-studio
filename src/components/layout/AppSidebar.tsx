@@ -14,6 +14,8 @@ import {
   Columns3,
   Moon,
   Sun,
+  User,
+  History,
 } from 'lucide-react';
 
 import {
@@ -41,9 +43,11 @@ const ALL_TABS = [
   { id: 'osi-activities', label: 'Atividades OSI', icon: Activity, minRole: 'analista' },
   { id: 'kanban', label: 'Kanban', icon: Columns3, minRole: 'analista' },
   { id: 'add', label: 'Adicionar', icon: Plus, minRole: 'analista' },
+  { id: 'profile', label: 'Meu Perfil', icon: User, minRole: 'analista' },
   { id: 'status', label: 'Status', icon: Palette, minRole: 'gerente' },
   { id: 'reports', label: 'Relatórios', icon: BarChart3, minRole: 'gerente' },
   { id: 'export', label: 'Importar/Exportar', icon: FileText, minRole: 'gerente' },
+  { id: 'audit', label: 'Auditoria', icon: History, minRole: 'gerente' },
   { id: 'users', label: 'Usuários', icon: Users, minRole: 'admin' },
   { id: 'settings', label: 'Configurações', icon: Settings, minRole: 'admin' },
 ];

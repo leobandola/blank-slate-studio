@@ -94,6 +94,8 @@ export const useSupabaseActivities = () => {
         atividade: activity.atividade,
         observacao: activity.observacao || '',
         status: activity.status,
+        prazo: (activity as any).prazo || '',
+        tags: (activity as any).tags || [],
       }));
 
       setActivities(mappedActivities);
@@ -140,7 +142,9 @@ export const useSupabaseActivities = () => {
           atividade: activity.atividade,
           observacao: activity.observacao,
           status: activity.status,
-        })
+          prazo: activity.prazo,
+          tags: activity.tags,
+        } as any)
         .select()
         .single();
 
@@ -161,6 +165,8 @@ export const useSupabaseActivities = () => {
         atividade: data.atividade,
         observacao: data.observacao || '',
         status: data.status,
+        prazo: (data as any).prazo || '',
+        tags: (data as any).tags || [],
       };
 
       setActivities(prev => [newActivity, ...prev]);
@@ -191,7 +197,9 @@ export const useSupabaseActivities = () => {
           atividade: updates.atividade,
           observacao: updates.observacao,
           status: updates.status,
-        })
+          prazo: updates.prazo,
+          tags: updates.tags,
+        } as any)
         .eq('id', id)
         .eq('user_id', user.id);
 

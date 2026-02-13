@@ -23,6 +23,9 @@ import { OsiActivityReports } from '@/components/reports/OsiActivityReports';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { KanbanBoard } from '@/components/activities/KanbanBoard';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
+import { UserProfile } from '@/components/profile/UserProfile';
+import { AuditLog } from '@/components/audit/AuditLog';
+import { ActivityDetail } from '@/components/activities/ActivityDetail';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -40,6 +43,8 @@ const TAB_TITLES: Record<string, string> = {
   'export-osi': 'Importar/Exportar OSI',
   users: 'Usuários',
   settings: 'Configurações',
+  profile: 'Meu Perfil',
+  audit: 'Log de Auditoria',
 };
 
 const Index = () => {
@@ -50,6 +55,7 @@ const Index = () => {
   const [dateFilteredOsiActivities, setDateFilteredOsiActivities] = useState<OsiActivity[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [initialOsiLoadDone, setInitialOsiLoadDone] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const navigate = useNavigate();
 
   const {
@@ -136,6 +142,7 @@ const Index = () => {
                 onDeleteActivity={deleteActivity}
                 onAddActivity={() => setActiveTab('add')}
                 onDuplicateActivity={handleDuplicateActivity}
+                onSelectActivity={setSelectedActivity}
                 getStatusColor={getStatusColor}
               />
             </div>
@@ -192,6 +199,10 @@ const Index = () => {
         return <UserManagement />;
       case 'settings':
         return <Settings activities={activities} statuses={statuses} onClearData={handleClearData} />;
+      case 'profile':
+        return <UserProfile />;
+      case 'audit':
+        return <AuditLog />;
       default:
         return <div>Página não encontrada</div>;
     }
@@ -225,6 +236,11 @@ const Index = () => {
           </main>
         </div>
       </div>
+      <ActivityDetail
+        activity={selectedActivity}
+        open={!!selectedActivity}
+        onClose={() => setSelectedActivity(null)}
+      />
     </SidebarProvider>
   );
 };
