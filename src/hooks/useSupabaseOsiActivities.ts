@@ -63,6 +63,23 @@ export const useSupabaseOsiActivities = () => {
   useEffect(() => {
     if (user) {
       loadOsiActivities();
+
+      // Real-time subscription for OSI activities
+      const osiChannel = supabase
+        .channel('osi-activities-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'osi_activities',
+          filter: `user_id=eq.${user.id}`,
+        }, () => {
+          loadOsiActivities();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(osiChannel);
+      };
     }
   }, [user]);
 

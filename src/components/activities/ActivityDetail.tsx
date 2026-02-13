@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ActivityComments } from '@/components/comments/ActivityComments';
 import { ActivityAttachments } from '@/components/attachments/ActivityAttachments';
+import { SubtaskChecklist } from '@/components/subtasks/SubtaskChecklist';
 import { Activity } from '@/types/activity';
-import { MessageSquare, Paperclip, Info } from 'lucide-react';
+import { MessageSquare, Paperclip, Info, ListChecks } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { TagDisplay } from '@/components/tags/TagManager';
 
@@ -75,8 +76,12 @@ export const ActivityDetail = ({ activity, open, onClose }: ActivityDetailProps)
           )}
         </div>
 
-        <Tabs defaultValue="comments" className="flex-1 overflow-hidden flex flex-col">
+        <Tabs defaultValue="subtasks" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="w-full">
+            <TabsTrigger value="subtasks" className="flex-1 gap-1">
+              <ListChecks className="h-3 w-3" />
+              Checklist
+            </TabsTrigger>
             <TabsTrigger value="comments" className="flex-1 gap-1">
               <MessageSquare className="h-3 w-3" />
               Comentários
@@ -92,6 +97,9 @@ export const ActivityDetail = ({ activity, open, onClose }: ActivityDetailProps)
               )}
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="subtasks" className="flex-1 overflow-auto mt-3">
+            <SubtaskChecklist activityId={activity.id!} />
+          </TabsContent>
           <TabsContent value="comments" className="flex-1 overflow-hidden mt-3">
             <ActivityComments activityId={activity.id!} />
           </TabsContent>
