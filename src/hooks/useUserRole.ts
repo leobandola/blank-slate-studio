@@ -54,6 +54,10 @@ export const useUserRole = () => {
   const canViewReports = role === 'admin' || role === 'gerente';
   const canDeleteActivities = role === 'admin' || role === 'gerente';
   const canAccessSettings = role === 'admin';
+  const canViewTeamDashboard = role === 'admin' || role === 'gerente';
+  const canViewComparativeReports = role === 'admin' || role === 'gerente';
+  const canManagePermissions = role === 'admin';
+  const canViewAllActivities = role === 'admin' || role === 'gerente';
 
   return {
     role,
@@ -64,5 +68,9 @@ export const useUserRole = () => {
     canViewReports,
     canDeleteActivities,
     canAccessSettings,
+    canViewTeamDashboard,
+    canViewComparativeReports,
+    canManagePermissions,
+    canViewAllActivities,
   };
 };
