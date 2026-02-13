@@ -20,6 +20,7 @@ import {
   FileBox,
   RepeatIcon,
   Target,
+  GitCompareArrows,
 } from 'lucide-react';
 
 import {
@@ -53,7 +54,9 @@ const ALL_TABS = [
   { id: 'goals', label: 'Metas', icon: Target, minRole: 'analista' },
   { id: 'profile', label: 'Meu Perfil', icon: User, minRole: 'analista' },
   { id: 'status', label: 'Status', icon: Palette, minRole: 'gerente' },
+  { id: 'team-dashboard', label: 'Painel Equipes', icon: Users, minRole: 'gerente' },
   { id: 'reports', label: 'Relatórios', icon: BarChart3, minRole: 'gerente' },
+  { id: 'comparative', label: 'Comparativos', icon: GitCompareArrows, minRole: 'gerente' },
   { id: 'export', label: 'Importar/Exportar', icon: FileText, minRole: 'gerente' },
   { id: 'audit', label: 'Auditoria', icon: History, minRole: 'gerente' },
   { id: 'users', label: 'Usuários', icon: Users, minRole: 'admin' },

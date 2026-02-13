@@ -32,6 +32,9 @@ import { RecurringActivities } from '@/components/recurring/RecurringActivities'
 import { ActivityTemplates } from '@/components/templates/ActivityTemplates';
 import { GoalsManager } from '@/components/goals/GoalsManager';
 import { CalendarView } from '@/components/calendar/CalendarView';
+import { TeamDashboard } from '@/components/dashboard/TeamDashboard';
+import { ComparativeReports } from '@/components/reports/ComparativeReports';
+import { NotificationPreferences } from '@/components/notifications/NotificationPreferences';
 import { Toaster } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
@@ -48,13 +51,16 @@ const TAB_TITLES: Record<string, string> = {
   recurring: 'Recorrentes',
   goals: 'Metas',
   status: 'Gerenciar Status',
+  'team-dashboard': 'Painel Multi-Equipe',
   reports: 'Relatórios',
+  comparative: 'Relatórios Comparativos',
   export: 'Importar/Exportar',
   'export-osi': 'Importar/Exportar OSI',
   users: 'Usuários',
   settings: 'Configurações',
   profile: 'Meu Perfil',
   audit: 'Log de Auditoria',
+  'notification-prefs': 'Preferências de Notificação',
 };
 
 const Index = () => {
@@ -209,6 +215,25 @@ const Index = () => {
         return <RecurringActivities statuses={statuses} />;
       case 'goals':
         return <GoalsManager activities={activities} />;
+      case 'team-dashboard':
+        return (
+          <TeamDashboard
+            activities={activities}
+            osiActivities={osiActivities}
+            statuses={statuses}
+            getStatusColor={getStatusColor}
+          />
+        );
+      case 'comparative':
+        return (
+          <ComparativeReports
+            activities={activities}
+            statuses={statuses}
+            getStatusColor={getStatusColor}
+          />
+        );
+      case 'notification-prefs':
+        return <NotificationPreferences />;
       case 'status':
         return <StatusManager statuses={statuses} onAddStatus={addStatus} onUpdateStatus={updateStatus} onDeleteStatus={deleteStatus} />;
       case 'reports':
