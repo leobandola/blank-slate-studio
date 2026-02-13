@@ -3,8 +3,6 @@ import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Activity } from '@/types/activity';
 import { OsiActivity } from '@/types/osiActivity';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 interface PdfExportProps {
   activities?: Activity[];
@@ -15,15 +13,17 @@ interface PdfExportProps {
 
 export const PdfExport = ({ activities, osiActivities, title = 'Relatório', variant = 'outline' }: PdfExportProps) => {
 
-  const exportActivitiesToPdf = () => {
+  const exportActivitiesToPdf = async () => {
     if (!activities || activities.length === 0) {
       toast.error('Nenhuma atividade para exportar');
       return;
     }
 
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
     const doc = new jsPDF({ orientation: 'landscape' });
 
-    // Header
     doc.setFontSize(16);
     doc.setTextColor(41, 98, 255);
     doc.text(title, 14, 15);
@@ -32,23 +32,12 @@ export const PdfExport = ({ activities, osiActivities, title = 'Relatório', var
     doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 22);
     doc.text(`Total: ${activities.length} atividades`, 14, 27);
 
-    // Table
     autoTable(doc, {
       startY: 32,
       head: [['Data', 'Hora', 'Obra', 'Site', 'OTS/OSI', 'Designação', 'Eq. Config.', 'Cidade', 'Empresa', 'Equipe', 'Atividade', 'Status']],
       body: activities.map(a => [
-        a.data,
-        a.hora,
-        a.obra,
-        a.site,
-        a.otsOsi,
-        a.designacao,
-        a.equipeConfiguracao,
-        a.cidade,
-        a.empresa,
-        a.equipe,
-        a.atividade,
-        a.status,
+        a.data, a.hora, a.obra, a.site, a.otsOsi, a.designacao,
+        a.equipeConfiguracao, a.cidade, a.empresa, a.equipe, a.atividade, a.status,
       ]),
       styles: { fontSize: 7, cellPadding: 2 },
       headStyles: { fillColor: [41, 98, 255], fontSize: 7 },
@@ -56,50 +45,34 @@ export const PdfExport = ({ activities, osiActivities, title = 'Relatório', var
       margin: { top: 32 },
     });
 
-    // Summary page
     doc.addPage();
     doc.setFontSize(14);
     doc.setTextColor(41, 98, 255);
     doc.text('Resumo', 14, 15);
 
-    // Status summary
     const statusCounts: Record<string, number> = {};
-    activities.forEach(a => {
-      statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
-    });
+    activities.forEach(a => { statusCounts[a.status] = (statusCounts[a.status] || 0) + 1; });
 
     autoTable(doc, {
       startY: 22,
       head: [['Status', 'Quantidade', '% do Total']],
-      body: Object.entries(statusCounts)
-        .sort(([, a], [, b]) => b - a)
-        .map(([status, count]) => [
-          status,
-          count.toString(),
-          `${Math.round((count / activities.length) * 100)}%`,
-        ]),
+      body: Object.entries(statusCounts).sort(([, a], [, b]) => b - a).map(([status, count]) => [
+        status, count.toString(), `${Math.round((count / activities.length) * 100)}%`,
+      ]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [41, 98, 255] },
     });
 
-    // Team summary
     const teamCounts: Record<string, number> = {};
-    activities.forEach(a => {
-      teamCounts[a.equipe || 'N/A'] = (teamCounts[a.equipe || 'N/A'] || 0) + 1;
-    });
+    activities.forEach(a => { teamCounts[a.equipe || 'N/A'] = (teamCounts[a.equipe || 'N/A'] || 0) + 1; });
 
     const lastY = (doc as any).lastAutoTable?.finalY || 60;
     autoTable(doc, {
       startY: lastY + 10,
       head: [['Equipe', 'Quantidade', '% do Total']],
-      body: Object.entries(teamCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 15)
-        .map(([team, count]) => [
-          team,
-          count.toString(),
-          `${Math.round((count / activities.length) * 100)}%`,
-        ]),
+      body: Object.entries(teamCounts).sort(([, a], [, b]) => b - a).slice(0, 15).map(([team, count]) => [
+        team, count.toString(), `${Math.round((count / activities.length) * 100)}%`,
+      ]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [100, 116, 139] },
     });
@@ -108,11 +81,14 @@ export const PdfExport = ({ activities, osiActivities, title = 'Relatório', var
     toast.success('PDF exportado com sucesso!');
   };
 
-  const exportOsiToPdf = () => {
+  const exportOsiToPdf = async () => {
     if (!osiActivities || osiActivities.length === 0) {
       toast.error('Nenhuma atividade OSI para exportar');
       return;
     }
+
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF({ orientation: 'landscape' });
 
@@ -128,15 +104,8 @@ export const PdfExport = ({ activities, osiActivities, title = 'Relatório', var
       startY: 32,
       head: [['Data', 'OSI', 'Obra', 'Atividade', 'Ativação', 'Eq. Config.', 'Eq. Campo', 'Status', 'Obs']],
       body: osiActivities.map(a => [
-        a.data,
-        a.osi,
-        a.obra,
-        a.atividade,
-        a.ativacao,
-        a.equipe_configuracao,
-        a.equipe_campo,
-        a.status,
-        a.obs || '',
+        a.data, a.osi, a.obra, a.atividade, a.ativacao,
+        a.equipe_configuracao, a.equipe_campo, a.status, a.obs || '',
       ]),
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [41, 98, 255], fontSize: 8 },
