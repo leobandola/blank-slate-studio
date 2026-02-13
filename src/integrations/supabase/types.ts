@@ -7,212 +7,23 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      activities: {
-        Row: {
-          atividade: string
-          cidade: string
-          created_at: string
-          data: string
-          designacao: string
-          empresa: string
-          equipe: string
-          equipe_configuracao: string
-          hora: string
-          id: string
-          obra: string
-          observacao: string | null
-          ots_osi: string
-          site: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          atividade: string
-          cidade: string
-          created_at?: string
-          data: string
-          designacao: string
-          empresa: string
-          equipe: string
-          equipe_configuracao: string
-          hora: string
-          id?: string
-          obra: string
-          observacao?: string | null
-          ots_osi: string
-          site: string
-          status: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          atividade?: string
-          cidade?: string
-          created_at?: string
-          data?: string
-          designacao?: string
-          empresa?: string
-          equipe?: string
-          equipe_configuracao?: string
-          hora?: string
-          id?: string
-          obra?: string
-          observacao?: string | null
-          ots_osi?: string
-          site?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      activity_statuses: {
-        Row: {
-          color: string
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          color: string
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      osi_activities: {
-        Row: {
-          ativacao: string
-          atividade: string
-          created_at: string
-          data: string
-          equipe_campo: string
-          equipe_configuracao: string
-          id: string
-          obra: string
-          obs: string | null
-          osi: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          ativacao: string
-          atividade: string
-          created_at?: string
-          data: string
-          equipe_campo: string
-          equipe_configuracao: string
-          id?: string
-          obra: string
-          obs?: string | null
-          osi: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          ativacao?: string
-          atividade?: string
-          created_at?: string
-          data?: string
-          equipe_campo?: string
-          equipe_configuracao?: string
-          id?: string
-          obra?: string
-          obs?: string | null
-          osi?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          name: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id: string
-          name?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          name?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: Database["public"]["Enums"]["user_role"]
-      }
-      has_role: {
-        Args: {
-          user_id: string
-          required_role: Database["public"]["Enums"]["user_role"]
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      user_role: "admin" | "gerente" | "analista"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -339,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      user_role: ["admin", "gerente", "analista"],
-    },
+    Enums: {},
   },
 } as const
