@@ -75,14 +75,17 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
   };
 
   const exportAllData = () => {
-    const data = {
+    const brandingData = {
+      appTitle: localStorage.getItem('appTitle') || 'Agenda Empresarial',
+      appSubtitle: localStorage.getItem('appSubtitle') || 'Controle de Demandas',
+      customFavicon: localStorage.getItem('customFavicon') || null,
       activities,
       statuses,
       exportDate: new Date().toISOString(),
       version: '1.0'
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(brandingData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -90,7 +93,7 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
     link.click();
     URL.revokeObjectURL(url);
 
-    toast.success('Backup exportado com sucesso!');
+    toast.success('Backup exportado com sucesso! (Dados de atividades são salvos no banco de dados e exportados via "Importar/Exportar")');
   };
 
   const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,11 +105,8 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
       try {
         const data = JSON.parse(e.target?.result as string);
         
-        if (data.activities && data.statuses) {
-          localStorage.setItem('activities', JSON.stringify(data.activities));
-          localStorage.setItem('statuses', JSON.stringify(data.statuses));
-          
-          toast.success('Dados importados com sucesso! Recarregue a página.');
+        if (data.activities || data.statuses) {
+          toast.info('Para importar atividades, use a seção "Importar/Exportar" no menu lateral. Este backup contém apenas configurações de marca.');
         } else {
           toast.error('Formato de arquivo inválido');
         }
@@ -118,9 +118,11 @@ export const Settings = ({ activities, statuses, onClearData }: SettingsProps) =
   };
 
   const handleClearData = () => {
-    if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
-      onClearData();
-      toast.success('Todos os dados foram removidos');
+    if (confirm('Tem certeza que deseja limpar as configurações de marca? As atividades são gerenciadas pelo banco de dados.')) {
+      localStorage.removeItem('appTitle');
+      localStorage.removeItem('appSubtitle');
+      localStorage.removeItem('customFavicon');
+      toast.success('Configurações de marca removidas. Recarregue a página para aplicar.');
     }
   };
 

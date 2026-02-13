@@ -58,29 +58,34 @@ const Index = () => {
     loading: osiLoading,
   } = useSupabaseOsiActivities();
 
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [initialOsiLoadDone, setInitialOsiLoadDone] = useState(false);
+
   useEffect(() => {
     // Default to showing current day activities only on initial load
-    if (activities.length > 0 && dateFilteredActivities.length === 0) {
+    if (activities.length > 0 && !initialLoadDone) {
       const today = new Date().toISOString().split('T')[0];
       const todayActivities = activities.filter(activity => 
         activity.data && activity.data === today
       );
       setDateFilteredActivities(todayActivities);
       setFilteredActivities(todayActivities);
+      setInitialLoadDone(true);
     }
-  }, [activities]);
+  }, [activities, initialLoadDone]);
 
   useEffect(() => {
     // Default to showing current day OSI activities only on initial load
-    if (osiActivities.length > 0 && dateFilteredOsiActivities.length === 0) {
+    if (osiActivities.length > 0 && !initialOsiLoadDone) {
       const today = new Date().toISOString().split('T')[0];
       const todayOsiActivities = osiActivities.filter(activity => 
         activity.data && activity.data === today
       );
       setDateFilteredOsiActivities(todayOsiActivities);
       setFilteredOsiActivities(todayOsiActivities);
+      setInitialOsiLoadDone(true);
     }
-  }, [osiActivities]);
+  }, [osiActivities, initialOsiLoadDone]);
 
   useEffect(() => {
     if (!loading && !user) {
