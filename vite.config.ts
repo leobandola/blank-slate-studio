@@ -19,4 +19,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: [
+      '@dnd-kit/core',
+      '@dnd-kit/sortable',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-tabs',
+      'recharts',
+      'date-fns',
+      'date-fns/locale',
+    ],
+  },
 }));
