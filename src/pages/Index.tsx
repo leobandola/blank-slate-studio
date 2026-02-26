@@ -34,6 +34,8 @@ import { GoalsManager } from '@/components/goals/GoalsManager';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { TeamDashboard } from '@/components/dashboard/TeamDashboard';
 import { ComparativeReports } from '@/components/reports/ComparativeReports';
+import { ConfigTeamDashboard } from '@/components/dashboard/ConfigTeamDashboard';
+import { ConfigComparativeReports } from '@/components/reports/ConfigComparativeReports';
 import { NotificationPreferences } from '@/components/notifications/NotificationPreferences';
 import { ActivityTimeline } from '@/components/timeline/ActivityTimeline';
 import { AiSummary } from '@/components/ai/AiSummary';
@@ -54,8 +56,10 @@ const TAB_TITLES: Record<string, string> = {
   goals: 'Metas',
   status: 'Gerenciar Status',
   'team-dashboard': 'Painel Multi-Equipe',
+  'config-team-dashboard': 'Painel Equipes de Configuração',
   reports: 'Relatórios',
   comparative: 'Relatórios Comparativos',
+  'config-comparative': 'Comparativos Eq. Configuração',
   export: 'Importar/Exportar',
   'export-osi': 'Importar/Exportar OSI',
   users: 'Usuários',
@@ -231,9 +235,26 @@ const Index = () => {
             getStatusColor={getStatusColor}
           />
         );
+      case 'config-team-dashboard':
+        return (
+          <ConfigTeamDashboard
+            activities={activities}
+            osiActivities={osiActivities}
+            statuses={statuses}
+            getStatusColor={getStatusColor}
+          />
+        );
       case 'comparative':
         return (
           <ComparativeReports
+            activities={activities}
+            statuses={statuses}
+            getStatusColor={getStatusColor}
+          />
+        );
+      case 'config-comparative':
+        return (
+          <ConfigComparativeReports
             activities={activities}
             statuses={statuses}
             getStatusColor={getStatusColor}
