@@ -61,8 +61,8 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
 
   // Auto-apply filter when period or date changes
   React.useEffect(() => {
-    onFilter(getFilteredActivities);
-  }, [getFilteredActivities, onFilter]);
+    onFilterRef.current(getFilteredActivities);
+  }, [getFilteredActivities]);
 
   // Group activities by date for better visualization
   const groupedActivities = useMemo(() => {
