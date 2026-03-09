@@ -75,6 +75,7 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
       
       try {
         const activityDate = parseISO(activity.data);
+        if (!isValid(activityDate)) return;
         const dateKey = format(activityDate, 'yyyy-MM-dd');
         
         if (!groups[dateKey]) {
