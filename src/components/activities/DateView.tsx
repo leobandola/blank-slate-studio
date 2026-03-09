@@ -17,6 +17,8 @@ interface DateViewProps {
 type ViewPeriod = 'day' | 'week' | 'month' | 'year';
 
 export function DateView({ activities, onFilter }: DateViewProps) {
+  const onFilterRef = useRef(onFilter);
+  onFilterRef.current = onFilter;
   const [isOpen, setIsOpen] = useState(false);
   const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('day');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
