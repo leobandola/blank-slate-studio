@@ -101,7 +101,9 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
   };
 
   const getDateLabel = () => {
+    if (!selectedDate) return 'Selecione uma data';
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return 'Data inválida';
     
     switch (viewPeriod) {
       case 'day':

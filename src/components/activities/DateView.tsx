@@ -103,7 +103,9 @@ export function DateView({ activities, onFilter }: DateViewProps) {
   };
 
   const getDateLabel = () => {
+    if (!selectedDate) return 'Selecione uma data';
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return 'Data inválida';
     
     switch (viewPeriod) {
       case 'day':
