@@ -24,7 +24,9 @@ export function DateView({ activities, onFilter }: DateViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const getFilteredActivities = useMemo(() => {
+    if (!selectedDate) return [];
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return [];
     
     return activities.filter(activity => {
       if (!activity.data) return false;
