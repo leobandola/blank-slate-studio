@@ -33,6 +33,7 @@ export function DateView({ activities, onFilter }: DateViewProps) {
       
       try {
         const activityDate = parseISO(activity.data);
+        if (!isValid(activityDate)) return false;
         
         switch (viewPeriod) {
           case 'day':
@@ -77,6 +78,7 @@ export function DateView({ activities, onFilter }: DateViewProps) {
       
       try {
         const activityDate = parseISO(activity.data);
+        if (!isValid(activityDate)) return;
         const dateKey = format(activityDate, 'yyyy-MM-dd');
         
         if (!groups[dateKey]) {
@@ -215,7 +217,7 @@ export function DateView({ activities, onFilter }: DateViewProps) {
                   {Object.entries(groupedActivities).map(([date, dayActivities]) => (
                     <div key={date} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg">
                       <span className="font-medium">
-                        {format(parseISO(date), "dd/MM/yyyy", { locale: ptBR })}
+                        {(() => { try { return format(parseISO(date), "dd/MM/yyyy", { locale: ptBR }); } catch { return date; } })()}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {dayActivities.length} atividade{dayActivities.length !== 1 ? 's' : ''}
