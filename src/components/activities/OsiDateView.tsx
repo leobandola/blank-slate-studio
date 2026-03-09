@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,6 +16,8 @@ interface OsiDateViewProps {
 type ViewPeriod = 'day' | 'week' | 'month' | 'year';
 
 export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
+  const onFilterRef = useRef(onFilter);
+  onFilterRef.current = onFilter;
   const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('day');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -59,8 +61,8 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
 
   // Auto-apply filter when period or date changes
   React.useEffect(() => {
-    onFilter(getFilteredActivities);
-  }, [getFilteredActivities, onFilter]);
+    onFilterRef.current(getFilteredActivities);
+  }, [getFilteredActivities]);
 
   // Group activities by date for better visualization
   const groupedActivities = useMemo(() => {
