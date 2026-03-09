@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Calendar, Filter, Clock, Layers, ChevronDown } from 'lucide-react';
 import { Activity } from '@/types/activity';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface DateViewProps {
@@ -24,7 +24,9 @@ export function DateView({ activities, onFilter }: DateViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const getFilteredActivities = useMemo(() => {
+    if (!selectedDate) return [];
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return [];
     
     return activities.filter(activity => {
       if (!activity.data) return false;
@@ -101,7 +103,9 @@ export function DateView({ activities, onFilter }: DateViewProps) {
   };
 
   const getDateLabel = () => {
+    if (!selectedDate) return 'Selecione uma data';
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return 'Data inválida';
     
     switch (viewPeriod) {
       case 'day':

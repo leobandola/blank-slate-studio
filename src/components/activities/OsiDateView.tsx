@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Calendar, Filter, Clock, Layers } from 'lucide-react';
 import { OsiActivity } from '@/types/osiActivity';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface OsiDateViewProps {
@@ -22,7 +22,9 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const getFilteredActivities = useMemo(() => {
+    if (!selectedDate) return [];
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return [];
     
     return activities.filter(activity => {
       if (!activity.data) return false;
@@ -99,7 +101,9 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
   };
 
   const getDateLabel = () => {
+    if (!selectedDate) return 'Selecione uma data';
     const referenceDate = parseISO(selectedDate);
+    if (!isValid(referenceDate)) return 'Data inválida';
     
     switch (viewPeriod) {
       case 'day':
