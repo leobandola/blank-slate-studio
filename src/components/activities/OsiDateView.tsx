@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Calendar, Filter, Clock, Layers } from 'lucide-react';
 import { OsiActivity } from '@/types/osiActivity';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, isWithinInterval, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface OsiDateViewProps {
