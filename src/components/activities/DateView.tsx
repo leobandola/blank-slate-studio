@@ -33,6 +33,7 @@ export function DateView({ activities, onFilter }: DateViewProps) {
       
       try {
         const activityDate = parseISO(activity.data);
+        if (!isValid(activityDate)) return false;
         
         switch (viewPeriod) {
           case 'day':
