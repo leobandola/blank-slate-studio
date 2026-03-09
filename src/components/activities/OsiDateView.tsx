@@ -16,6 +16,8 @@ interface OsiDateViewProps {
 type ViewPeriod = 'day' | 'week' | 'month' | 'year';
 
 export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
+  const onFilterRef = useRef(onFilter);
+  onFilterRef.current = onFilter;
   const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('day');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
