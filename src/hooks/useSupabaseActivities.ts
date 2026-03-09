@@ -74,7 +74,6 @@ export const useSupabaseActivities = () => {
         supabase.removeChannel(statusesChannel);
       };
     }
-    setLoading(false);
   }, [user, selectedDate]);
 
   const loadActivities = async () => {
