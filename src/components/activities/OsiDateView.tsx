@@ -31,7 +31,7 @@ export function OsiDateView({ activities, onFilter }: OsiDateViewProps) {
       
       try {
         const activityDate = parseISO(activity.data);
-        
+        if (!isValid(activityDate)) return false;
         switch (viewPeriod) {
           case 'day':
             return format(activityDate, 'yyyy-MM-dd') === selectedDate;
